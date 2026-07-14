@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 
+import { db } from '../Config/Db.Config.js';
 import { authMiddleware } from '../Middleware/Auth.Middleware.js';
 import { login, logout, refresh } from '../Service/Auth.Service.js';
 
@@ -43,8 +44,13 @@ export function authRouter(): Router {
     res.json({ ok: true });
   });
 
-  router.get('/me', authMiddleware, (req, res) => {
-    res.json(req.user);
+  router.get('/me', authMiddleware, async (req, res) => {
+    const user = await db.user.findUnique({
+      where: { id: req.user!.sub },
+      select: { id: true, email: true, name: true, role: true },
+    });
+    if (!user) { res.status(401).json({ error: 'User not found' }); return; }
+    res.json(user);
   });
 
   return router;

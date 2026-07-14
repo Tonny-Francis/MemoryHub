@@ -2,6 +2,20 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getDecision, getProject, type DecisionFile, type ProjectDetail } from '../api/client';
 
+function miniMd(raw: string): string {
+  return raw
+    .split('\n')
+    .map((line) => {
+      const inline = (s: string) => s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      if (/^### /.test(line)) return `<p style="font-size:11px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;margin:10px 0 2px">${inline(line.slice(4))}</p>`;
+      if (/^## /.test(line))  return `<p style="font-size:12px;font-weight:700;color:var(--text);margin:10px 0 2px">${inline(line.slice(3))}</p>`;
+      if (/^# /.test(line))   return `<p style="font-size:13px;font-weight:700;color:var(--text);margin:0 0 6px">${inline(line.slice(2))}</p>`;
+      if (line.trim() === '') return '<div style="height:4px"></div>';
+      return `<p style="font-size:12px;color:var(--text-2);margin:1px 0;line-height:1.5">${inline(line)}</p>`;
+    })
+    .join('');
+}
+
 function DecisionModal({ slug, filename, onClose }: { slug: string; filename: string; onClose: () => void }) {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
@@ -32,9 +46,7 @@ function DecisionModal({ slug, filename, onClose }: { slug: string; filename: st
         {loading ? (
           <p style={{ color: 'var(--text-2)' }}>Loading…</p>
         ) : (
-          <pre style={{ fontSize: 12, lineHeight: 1.7, whiteSpace: 'pre-wrap', color: 'var(--text)', fontFamily: 'inherit' }}>
-            {content}
-          </pre>
+          <div dangerouslySetInnerHTML={{ __html: miniMd(content) }} />
         )}
       </div>
     </div>
@@ -136,15 +148,10 @@ export function ProjectPage() {
         <div>
           <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>Overview</h2>
           <div className="card">
-            <pre style={{
-              fontSize: 12,
-              lineHeight: 1.6,
-              whiteSpace: 'pre-wrap',
-              color: 'var(--text-2)',
-              fontFamily: 'inherit',
-            }}>
-              {project.overview ?? 'No overview yet.'}
-            </pre>
+            {project.overview
+              ? <div dangerouslySetInnerHTML={{ __html: miniMd(project.overview) }} />
+              : <p style={{ fontSize: 12, color: 'var(--text-2)' }}>No overview yet.</p>
+            }
           </div>
         </div>
       </div>

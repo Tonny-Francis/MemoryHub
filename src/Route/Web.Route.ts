@@ -137,7 +137,7 @@ export function webRouter(): Router {
   router.post('/projects/:slug/drafts/:filename/confirm', requireRole('WRITER', 'ADMIN'), async (req, res) => {
     const { slug, filename } = req.params;
     const from = `projects/${slug}/drafts/${filename}`;
-    const to = `projects/${slug}/decisions/${filename.replace('-draft', '')}`;
+    const to = `projects/${slug}/decisions/${(filename as string).replace('-draft', '')}`;
     await moveFile(from, to, `decision: confirm draft ${slug}/${filename}`);
     res.json({ confirmed: to });
   });

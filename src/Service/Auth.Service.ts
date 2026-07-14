@@ -12,6 +12,7 @@ const BCRYPT_ROUNDS = 12;
 export interface TokenPayload {
   sub: string;
   email: string;
+  name: string;
   role: string;
 }
 
@@ -30,7 +31,7 @@ export async function login(email: string, password: string) {
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) throw new Error('Invalid credentials');
 
-  const accessToken = signAccessToken({ sub: user.id, email: user.email, role: user.role });
+  const accessToken = signAccessToken({ sub: user.id, email: user.email, name: user.name, role: user.role });
   const refreshToken = crypto.randomBytes(48).toString('hex');
 
   const expiresAt = new Date();
@@ -59,6 +60,7 @@ export async function refresh(refreshToken: string) {
   const accessToken = signAccessToken({
     sub: session.user.id,
     email: session.user.email,
+    name: session.user.name,
     role: session.user.role,
   });
 

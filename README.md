@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/logo.svg" width="80" height="80" alt="MemoryHub logo" />
+  <img src="docs/logo.png" width="80" height="80" alt="MemoryHub logo" />
   <h1>MemoryHub</h1>
   <p><strong>Engineering knowledge base as MCP — multi-project second brain for software teams</strong></p>
 
@@ -34,7 +34,7 @@ The person who knows is on vacation. The decision was made in a Discord thread 8
 
 ## How it works
 
-<img src="docs/context-flow.svg" alt="Context flow: dev opens chat → get_context auto-runs → AI answers → decision logged" width="100%"/>
+<img src="docs/context-flow.png" alt="Context flow: dev opens chat → get_context auto-runs → AI answers → decision logged" width="100%"/>
 
 1. **Dev opens a chat** on any repo → the MCP `get_context` tool runs automatically (~800 tokens, not 8000)
 2. **AI already knows** the stack, key decisions, open tasks, and architecture of that project
@@ -45,7 +45,7 @@ The person who knows is on vacation. The decision was made in a Discord thread 8
 
 ## Architecture
 
-<img src="docs/architecture.svg" alt="MemoryHub system architecture" width="100%"/>
+<img src="docs/architecture.png" alt="MemoryHub system architecture" width="100%"/>
 
 ### Key design decisions
 

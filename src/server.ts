@@ -11,12 +11,14 @@ import { env } from './Config/Env.Config.js';
 import { logger } from './Config/Logger.Config.js';
 import { authMiddleware } from './Middleware/Auth.Middleware.js';
 import { authRouter } from './Route/Auth.Route.js';
+import { ingestRouter } from './Route/Ingest.Route.js';
 import { webRouter } from './Route/Web.Route.js';
 import { seedAdminIfEmpty } from './Service/Auth.Service.js';
 import { initGit, schedulePull } from './Service/Git.Service.js';
 import { registerContextTool } from './Tool/Context.Tool.js';
 import { registerDecisionTool } from './Tool/Decision.Tool.js';
 import { registerSearchTool } from './Tool/Search.Tool.js';
+import { registerSemanticSearchTool } from './Tool/SemanticSearch.Tool.js';
 import { registerVaultTools } from './Tool/Vault.Tool.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -31,6 +33,7 @@ function createMcpServer(): McpServer {
   registerContextTool(server);
   registerDecisionTool(server);
   registerSearchTool(server);
+  registerSemanticSearchTool(server);
   registerVaultTools(server);
 
   return server;
@@ -54,6 +57,9 @@ async function main(): Promise<void> {
 
   // Auth routes (no middleware — login is public)
   app.use('/api/auth', authRouter());
+
+  // Ingest webhooks — public (signature-verified per route)
+  app.use('/api/ingest', ingestRouter());
 
   // All other API routes require a valid JWT
   app.use('/api', authMiddleware, webRouter());

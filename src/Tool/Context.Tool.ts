@@ -101,8 +101,12 @@ export function registerContextTool(server: McpServer): void {
         .string()
         .optional()
         .describe('Project slug (e.g. "api-payments"). Omit to list all projects.'),
+      file: z
+        .string()
+        .optional()
+        .describe('File path being edited (e.g. "src/auth/middleware.ts"). Filters decisions relevant to that module.'),
     },
-    async ({ project }) => {
+    async ({ project, file }) => {
       if (!project) {
         const slugs = await listProjectSlugs();
         const globalTeams = await safeRead(vaultPath('_global', 'teams.md'));
@@ -114,8 +118,43 @@ export function registerContextTool(server: McpServer): void {
         return { content: [{ type: 'text' as const, text: lines.join('\n') }] };
       }
 
-      const ctx = await buildProjectContext(project);
-      logger.debug({ project }, 'get_context');
+      let ctx = await buildProjectContext(project);
+
+      if (file) {
+        // Extract meaningful keywords from the file path to filter relevant decisions
+        const keywords = file
+          .replace(/\\/g, '/')
+          .split('/')
+          .flatMap((seg) => seg.replace(/\.[^.]+$/, '').split(/[-_.]/))
+          .map((k) => k.toLowerCase())
+          .filter((k) => k.length > 2 && !['src', 'lib', 'app', 'pkg', 'test', 'spec', 'index', 'main', 'mod', 'utils', 'helpers', 'types'].includes(k));
+
+        if (keywords.length) {
+          const decisions = await listDecisions(project, 'decisions');
+          const relevant: string[] = [];
+
+          for (const d of decisions) {
+            try {
+              const content = await fs.readFile(
+                path.join(env.VAULT_DIR, 'projects', project, 'decisions', d.filename),
+                'utf-8',
+              );
+              const lower = `${d.title} ${content}`.toLowerCase();
+              if (keywords.some((kw) => lower.includes(kw))) {
+                relevant.push(`- \`${d.date}\` **${d.title}**\n  ${content.split('\n').find((l) => l.startsWith('##') && l.toLowerCase().includes('decision'))?.replace(/^#+\s*/, '') ?? ''}`);
+              }
+            } catch { /* skip */ }
+          }
+
+          if (relevant.length) {
+            ctx += `\n\n## Decisions relevant to \`${file}\`\n${relevant.slice(0, 5).join('\n')}`;
+          } else {
+            ctx += `\n\n_No decisions found matching \`${file}\` path keywords: ${keywords.join(', ')}_`;
+          }
+        }
+      }
+
+      logger.debug({ project, file }, 'get_context');
       return { content: [{ type: 'text' as const, text: ctx }] };
     }
   );

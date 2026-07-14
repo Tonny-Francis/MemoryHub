@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg16
     environment:
       POSTGRES_USER: memoryhub
       POSTGRES_PASSWORD: memoryhub
@@ -9,6 +9,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/01-vector.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U memoryhub"]
       interval: 5s
@@ -32,7 +33,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    command: sh -c "npx prisma migrate deploy && node dist/server.js"
+    command: sh -c "npx prisma db push --accept-data-loss && node dist/server.js"
 
 volumes:
   postgres_data:

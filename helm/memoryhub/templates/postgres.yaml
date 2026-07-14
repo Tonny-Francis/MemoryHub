@@ -1,4 +1,15 @@
 {{- if .Values.postgres.enabled }}
+# ── Init ConfigMap ─────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "memoryhub.fullname" . }}-postgres-init
+  labels:
+    {{- include "memoryhub.labels" . | nindent 4 }}
+data:
+  01-vector.sql: |
+    CREATE EXTENSION IF NOT EXISTS vector;
+---
 # ── Secret ────────────────────────────────────────────────────────────────────
 apiVersion: v1
 kind: Secret
@@ -70,6 +81,9 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
+            - name: initdb
+              mountPath: /docker-entrypoint-initdb.d/01-vector.sql
+              subPath: 01-vector.sql
           readinessProbe:
             exec:
               command: ["pg_isready", "-U", {{ .Values.postgres.user | quote }}]
@@ -86,6 +100,9 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: {{ include "memoryhub.fullname" . }}-postgres
+        - name: initdb
+          configMap:
+            name: {{ include "memoryhub.fullname" . }}-postgres-init
 ---
 # ── Service ───────────────────────────────────────────────────────────────────
 apiVersion: v1

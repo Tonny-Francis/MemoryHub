@@ -137,11 +137,19 @@ export async function rejectDraft(slug: string, filename: string): Promise<void>
 // ── Search ────────────────────────────────────────────────────────────────────
 
 export interface SearchMatch { file: string; lines: string[]; }
+export interface SearchResult { path: string; projectSlug: string; content: string; similarity: number; }
 
 export async function search(q: string, project?: string): Promise<SearchMatch[]> {
   const params = new URLSearchParams({ q });
   if (project) params.set('project', project);
-  return request<SearchMatch[]>(`/search?${params}`);
+  const res = await request<{ mode: string; results: SearchMatch[] | SearchResult[] }>(`/search?${params}`);
+  if (res.mode === 'semantic') {
+    return (res.results as SearchResult[]).map((r) => ({
+      file: r.path,
+      lines: [r.content.slice(0, 200)],
+    }));
+  }
+  return res.results as SearchMatch[];
 }
 
 // ── Admin ─────────────────────────────────────────────────────────────────────

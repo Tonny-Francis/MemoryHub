@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { env } from '../Config/Env.Config.js';
 import { commitAndPush } from './Git.Service.js';
+import { deleteEmbedding, updateEmbedding } from './Embedding.Service.js';
 
 // ── Path helpers ──────────────────────────────────────────────────────────────
 
@@ -89,12 +90,28 @@ export async function writeFile(relPath: string, content: string, commitMsg?: st
   const full = vaultPath(relPath);
   await fs.mkdir(path.dirname(full), { recursive: true });
   await fs.writeFile(full, content, 'utf-8');
-  return commitAndPush(commitMsg ?? `chore: update ${relPath}`);
+  const result = commitAndPush(commitMsg ?? `chore: update ${relPath}`);
+
+  // Async: index embeddings for .md files under projects/*/decisions and projects/*/drafts
+  const mdMatch = relPath.match(/^projects\/([^/]+)\/(decisions|drafts)\/.+\.md$/);
+  if (mdMatch) {
+    updateEmbedding(relPath, mdMatch[1], content).catch(() => {});
+  }
+
+  return result;
+}
+
+export async function appendFile(relPath: string, content: string, commitMsg?: string): Promise<void> {
+  const full = vaultPath(relPath);
+  await fs.mkdir(path.dirname(full), { recursive: true });
+  await fs.appendFile(full, content, 'utf-8');
+  await commitAndPush(commitMsg ?? `chore: update ${relPath}`);
 }
 
 export async function deleteFile(relPath: string, commitMsg?: string): Promise<void> {
   await fs.unlink(vaultPath(relPath));
   await commitAndPush(commitMsg ?? `chore: delete ${relPath}`);
+  deleteEmbedding(relPath).catch(() => {});
 }
 
 export async function moveFile(from: string, to: string, commitMsg?: string): Promise<void> {

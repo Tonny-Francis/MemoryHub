@@ -46,6 +46,18 @@ model Project {
   @@map("projects")
 }
 
+model VaultEmbedding {
+  id          String   @id @default(cuid())
+  path        String   @unique
+  projectSlug String
+  content     String   @db.Text
+  embedding   Unsupported("vector(1536)")?
+  updatedAt   DateTime @updatedAt
+
+  @@index([projectSlug])
+  @@map("vault_embeddings")
+}
+
 enum Role {
   READER
   WRITER

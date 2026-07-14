@@ -20,7 +20,7 @@ spec:
           containers:
             - name: ingestion
               image: "{{ .Values.ingestion.image.repository }}:{{ .Values.ingestion.image.tag }}"
-              command: ["node", "dist/ingestion/worker.js"]
+              command: ["node", "dist/ingestion-runner.js"]
               env:
                 - name: NODE_ENV
                   value: {{ .Values.config.nodeEnv | quote }}
@@ -28,6 +28,11 @@ spec:
                   value: {{ .Values.config.vaultDir | quote }}
                 - name: GITLAB_URL
                   value: {{ .Values.config.gitlabUrl | quote }}
+                - name: JWT_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.secrets.existingSecret }}
+                      key: jwtSecret
                 - name: DATABASE_URL
                   valueFrom:
                     secretKeyRef:
@@ -50,11 +55,23 @@ spec:
                       name: {{ .Values.secrets.existingSecret }}
                       key: gitlabToken
                       optional: true
+                - name: GITLAB_PROJECT_IDS
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.secrets.existingSecret }}
+                      key: gitlabProjectIds
+                      optional: true
                 - name: DISCORD_BOT_TOKEN
                   valueFrom:
                     secretKeyRef:
                       name: {{ .Values.secrets.existingSecret }}
                       key: discordBotToken
+                      optional: true
+                - name: DISCORD_CHANNEL_IDS
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.secrets.existingSecret }}
+                      key: discordChannelIds
                       optional: true
                 - name: TRELLO_API_KEY
                   valueFrom:
@@ -67,6 +84,12 @@ spec:
                     secretKeyRef:
                       name: {{ .Values.secrets.existingSecret }}
                       key: trelloToken
+                      optional: true
+                - name: TRELLO_BOARD_IDS
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.secrets.existingSecret }}
+                      key: trelloBoardIds
                       optional: true
                 - name: ANTHROPIC_API_KEY
                   valueFrom:

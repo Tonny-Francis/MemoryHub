@@ -5,6 +5,7 @@ import { db } from '../Config/Db.Config.js';
 import { requireRole } from '../Middleware/Auth.Middleware.js';
 import { createUser } from '../Service/Auth.Service.js';
 import { pull } from '../Service/Git.Service.js';
+import { embeddingEnabled, semanticSearch } from '../Service/Embedding.Service.js';
 import {
   deleteFile,
   ensureProjectDirs,
@@ -134,6 +135,26 @@ export function webRouter(): Router {
     res.json(drafts);
   });
 
+  router.post('/projects/:slug/drafts', requireRole('WRITER', 'ADMIN'), async (req, res) => {
+    const schema = z.object({
+      topic: z.string().min(1),
+      content: z.string().min(1),
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.flatten() });
+      return;
+    }
+    const { slug } = req.params;
+    const date = parsed.data.date ?? new Date().toISOString().slice(0, 10);
+    const draftSlug = parsed.data.topic.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+    const filename = `${date}-${draftSlug}-draft.md`;
+    const relPath = `projects/${slug}/drafts/${filename}`;
+    await writeFile(relPath, parsed.data.content, `draft: ${slug}/${filename}`);
+    res.status(201).json({ path: relPath, filename });
+  });
+
   router.post('/projects/:slug/drafts/:filename/confirm', requireRole('WRITER', 'ADMIN'), async (req, res) => {
     const { slug, filename } = req.params;
     const from = `projects/${slug}/drafts/${filename}`;
@@ -153,12 +174,21 @@ export function webRouter(): Router {
   router.get('/search', async (req, res) => {
     const q = req.query.q as string | undefined;
     const project = req.query.project as string | undefined;
+    const mode = req.query.mode as string | undefined;
     if (!q) {
       res.status(400).json({ error: 'Missing query param q' });
       return;
     }
+
+    if (mode === 'semantic' && embeddingEnabled()) {
+      const limit = Math.min(Number(req.query.limit ?? 10), 50);
+      const matches = await semanticSearch(q, project, limit);
+      res.json({ mode: 'semantic', results: matches });
+      return;
+    }
+
     const matches = await searchVault(q, project);
-    res.json(matches);
+    res.json({ mode: 'fulltext', results: matches });
   });
 
   // ── Vault sync ────────────────────────────────────────────────────────────

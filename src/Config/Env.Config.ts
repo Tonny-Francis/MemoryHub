@@ -24,15 +24,22 @@ const EnvSchema = z.object({
   GITLAB_URL: z.string().default('https://gitlab.com'),
   GITLAB_TOKEN: z.string().optional(),
   GITLAB_WEBHOOK_SECRET: z.string().optional(),
+  GITLAB_PROJECT_IDS: z.string().optional(),
 
   DISCORD_BOT_TOKEN: z.string().optional(),
   DISCORD_CHANNEL_IDS: z.string().optional(),
+  DISCORD_GUILD_ID: z.string().optional(),
+  DISCORD_VOICE_CHANNEL_ID: z.string().optional(),
+  MEMORYHUB_API_URL: z.string().optional(),
+  MEMORYHUB_API_TOKEN: z.string().optional(),
+  MEMORYHUB_PROJECT: z.string().optional(),
 
   TRELLO_API_KEY: z.string().optional(),
   TRELLO_TOKEN: z.string().optional(),
   TRELLO_BOARD_IDS: z.string().optional(),
 
   ANTHROPIC_API_KEY: z.string().optional(),
+  OPENAI_API_KEY: z.string().optional(),
 });
 
 const parsed = EnvSchema.safeParse(process.env);

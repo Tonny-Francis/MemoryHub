@@ -1,148 +1,155 @@
 <div align="center">
-  <img src="docs/logo.png" width="80" height="80" alt="MemoryHub logo" />
-  <h1>MemoryHub</h1>
-  <p><strong>Engineering knowledge base as MCP — multi-project second brain for software teams</strong></p>
 
-  <p>
-    <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"/></a>
-    <img src="https://img.shields.io/badge/node-%3E%3D20-green" alt="Node 20+"/>
-    <img src="https://img.shields.io/badge/helm-chart-0f1689?logo=helm" alt="Helm chart"/>
-    <img src="https://img.shields.io/badge/MCP-compatible-4f8ef7" alt="MCP compatible"/>
-    <img src="https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker ready"/>
-    <img src="https://img.shields.io/badge/EKS-ready-FF9900?logo=amazonaws&logoColor=white" alt="EKS ready"/>
-  </p>
+# 🧠 MemoryHub
 
-  <br/>
+**Second brain automático para times de engenharia — captura contexto sem o dev precisar documentar**
+
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Node 20+](https://img.shields.io/badge/node-%3E%3D20-green)
+![MCP compatible](https://img.shields.io/badge/MCP-compatible-4f8ef7)
+![Docker ready](https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white)
+![EKS ready](https://img.shields.io/badge/EKS-ready-FF9900?logo=amazonaws&logoColor=white)
+![Helm chart](https://img.shields.io/badge/helm-chart-0f1689?logo=helm)
+
 </div>
 
 ---
 
-## The problem
+## O problema
 
-Your team has 50, 100, 200+ repositories. Every time a new developer touches a service — or you open an AI chat — someone has to explain the context from scratch:
+Seu time tem dezenas de repositórios. Cada vez que um dev novo toca um serviço — ou você abre um chat de IA — precisa explicar o contexto do zero:
 
-- *"Why did we choose gRPC here?"*
-- *"Who owns this service?"*
-- *"What's the auth strategy in this repo?"*
-- *"Was there a reason we didn't use Redis?"*
+- *"Por que usamos gRPC aqui?"*
+- *"Quem é o dono desse serviço?"*
+- *"Por que não usamos Redis?"*
+- *"Que decisão foi tomada naquela PR do mês passado?"*
 
-The person who knows is on vacation. The decision was made in a Discord thread 8 months ago. The AI assistant has no idea.
+A pessoa que sabe está de férias. A decisão foi tomada num thread do Discord há 8 meses. A IA não tem ideia.
 
-**MemoryHub fixes this.** It's an MCP server that gives every AI session instant, compact context about any project — without the dev having to ask, copy-paste docs, or ping anyone.
-
----
-
-## How it works
-
-<img src="docs/context-flow.png" alt="Context flow: dev opens chat → get_context auto-runs → AI answers → decision logged" width="100%"/>
-
-1. **Dev opens a chat** on any repo → the MCP `get_context` tool runs automatically (~800 tokens, not 8000)
-2. **AI already knows** the stack, key decisions, open tasks, and architecture of that project
-3. **Questions get answered** from the vault: *"why gRPC?"*, *"who owns this?"*, *"what's the retry strategy?"*
-4. **Decisions are captured** — manually via `log_decision` during sessions, or automatically from GitLab MRs, Discord threads, and Trello cards
+**MemoryHub resolve isso automaticamente** — sem o dev precisar documentar nada.
 
 ---
 
-## Architecture
+## Como funciona (fluxo completo)
 
-<img src="docs/architecture.png" alt="MemoryHub system architecture" width="100%"/>
+```mermaid
+flowchart LR
+    subgraph Fontes["📥 Fontes automáticas"]
+        A["git commit\n(Husky hook)"]
+        B["AI chat\n(Claude Code + MCP)"]
+        C["GitLab MR / push\n(webhook)"]
+        D["Trello cards\n(webhook)"]
+        E["Discord\n(bot + Whisper)"]
+    end
 
-### Key design decisions
+    subgraph Engine["⚙️ Engine"]
+        F["Extractor\nÉ uma decisão?\n(Haiku opcional)"]
+        G["Activity Logger\n(append-only)"]
+    end
 
-| Decision | Rationale |
-|---|---|
-| **`get_context` returns ≤ 800 tokens** | Not raw file dumps. Compact summary: stack, last 3 decisions (titles only), open tasks. |
-| **Git-backed vault** | All knowledge lives in a private git repo. Full history, no vendor lock-in, works offline. |
-| **Drafts → confirmation flow** | AI-extracted decisions go to `drafts/` first. Humans confirm via Web UI or `confirm_draft` tool. |
-| **Single Docker image** | UI + backend in one container. No separate frontend deploy. |
-| **Postgres in-cluster** | No RDS needed. StatefulSet with PVC. One `helm install` and you're done. |
+    subgraph Vault["🗄️ Vault (git-backed)"]
+        H["drafts/\nrevisar"]
+        I["decisions/\nconfirmado"]
+        J["activity/\nlog diário"]
+    end
 
----
+    subgraph Consume["🔍 Consumo"]
+        K["get_context MCP\n(sessão de IA)"]
+        L["search_vault\nfull-text / semântica"]
+        M["CLI local\nweekly digest"]
+        N["MR auto-comment\ndecisões relevantes"]
+    end
 
-## Features
+    A -->|AI resume commit| F
+    B -->|log_decision direto| I
+    C --> F
+    D --> F
+    D --> G
+    E --> F
 
-- **MCP server** — works with Claude Code, Cursor, and any MCP-compatible AI client
-- **Multi-project vault** — 100+ repos, each with isolated context, decisions, and architecture docs
-- **Compact context** — `get_context` returns ≤800 tokens; not raw file dumps
-- **Structured ADRs** — decisions stored as [Architecture Decision Records](https://adr.github.io/) with context, rationale, alternatives, and consequences
-- **Auto-ingestion** from GitLab (MRs/commits), Discord (decision channels), and Trello (labeled cards)
-- **Human-in-the-loop** — AI-generated drafts require human confirmation before becoming facts
-- **Full-text search** — across all projects or scoped to one
-- **Web UI** — login, browse projects, search, confirm/reject drafts
-- **Auth** — email + password + JWT (15min access, 7d refresh) with roles: Reader / Writer / Admin
-- **Git-backed vault** — private git repo with full commit history; push/pull on every write
-- **Single Docker image** — UI and backend built together; one container to run
-- **Helm chart** — production-ready deploy on EKS (or any K8s); Postgres included
+    F -->|sim| H
+    F -->|não| G
+    G --> J
+    H -->|confirm_draft| I
 
----
-
-## MCP tools
-
-| Tool | Description |
-|---|---|
-| `get_context` | Returns compact project context (~800 tokens). Pass `project` slug or omit to list all projects. Call at session start. |
-| `log_decision` | Saves a structured ADR (context, decision, alternatives, consequences) to `decisions/`. |
-| `list_decisions` | Lists all confirmed decisions for a project, with optional draft listing. |
-| `read_decision` | Reads the full content of a specific decision file. |
-| `confirm_draft` | Promotes an AI-generated draft from `drafts/` to `decisions/`. |
-| `search_vault` | Full-text search across all vault files. Optionally scoped to a project. |
-| `read_vault_file` | Reads any vault file by relative path. |
-| `write_vault_file` | Creates or updates any vault file, auto-commits to git. |
-
----
-
-## Vault structure
-
-```
-vault/
-├── _global/
-│   ├── teams.md          ← who owns which repos
-│   └── glossary.md       ← company-wide terminology
-└── projects/
-    └── {slug}/
-        ├── overview.md   ← stack, owner, status (≤5 lines — what get_context reads)
-        ├── context.md    ← extended context for the AI
-        ├── decisions/    ← confirmed ADRs (committed to git)
-        │   └── 2026-07-14-grpc-over-rest.md
-        ├── drafts/       ← AI-generated, pending human confirmation
-        │   └── 2026-07-14-remove-lodash-draft.md
-        ├── architecture/ ← diagrams, ADL, system notes
-        └── tasks/
-            └── backlog.md
+    I --> K
+    I --> L
+    I --> N
+    J --> L
+    J --> M
+    I --> M
 ```
 
-Every file is committed to a private git repo on every write. Full history. No lock-in.
+### O loop fechado
+
+1. Dev trabalha normalmente (commita, move card no Trello, discute no chat de IA)
+2. MemoryHub captura, extrai, classifica — **zero ação do dev**
+3. Decisões vão para `drafts/` → humano confirma em 1 clique pela UI
+4. Na próxima sessão de IA no mesmo projeto → `get_context` já sabe de tudo
 
 ---
 
-## Quick start
-
-### Local (Docker Compose)
+## Setup em um projeto existente
 
 ```bash
-git clone https://github.com/tonnysousa/memoryhub
-cd memoryhub
+# Dentro do projeto que você quer monitorar (5 minutos):
+node /caminho/para/memoryhub/scripts/memoryhub-init.mjs meu-projeto
+
+# Preencher .env gerado com 2 campos:
+MEMORYHUB_API_URL=https://memoryhub.empresa.com
+MEMORYHUB_API_TOKEN=<jwt de /api/auth/login>
+```
+
+O `init` cria automaticamente:
+
+| Arquivo | O que faz |
+|---|---|
+| `.husky/post-commit` | Cada commit → AI resume → vault activity log |
+| `.mcp.json` | Claude Code tem `log_decision`, `get_context`, `search_vault` |
+| `CLAUDE.md` | Instrui o Claude a logar decisões sem o dev pedir |
+| `.env` stub | Variáveis necessárias pré-preenchidas |
+
+---
+
+## O que é capturado automaticamente
+
+| Evento | O que salva | Quem faz |
+|---|---|---|
+| `git commit` | Resumo AI + link → activity log | Husky (zero ação do dev) |
+| Conversa no Claude Code | Decisão detectada → draft | CLAUDE.md instrui o Claude |
+| `get_context` ao abrir arquivo | Traz decisões anteriores relevantes | Claude lê automaticamente |
+| GitLab MR aberto | Detecta decisão → draft | Webhook |
+| GitLab MR aberto | Comenta com contexto do vault | Auto-comment |
+| Card movido / comentado (Trello) | Entry no activity log diário | Webhook |
+| Reunião no Discord (voz) | Transcreve por speaker → draft | Bot + Whisper |
+
+---
+
+## Início rápido (local)
+
+```bash
+git clone https://github.com/Tonny-Francis/MemoryHub.git
+cd MemoryHub
 
 cp .env.example .env
-# Edit .env — set JWT_SECRET, admin credentials
+# Editar .env — definir JWT_SECRET e credenciais admin
 
 docker compose up
 ```
 
-Open [http://localhost:8000](http://localhost:8000) and sign in with your credentials from `.env`.
+Abrir [http://localhost:8000](http://localhost:8000) e entrar com as credenciais do `.env`.
 
-### Connect Claude Code
-
-Get a JWT token:
+### Conectar ao Claude Code
 
 ```bash
+# Obter JWT
 curl -s -X POST http://localhost:8000/api/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"email":"admin@example.com","password":"changeme123"}' \
+  -d '{"email":"admin@exemplo.com","password":"suasenha"}' \
   | jq -r .accessToken
 ```
 
-Add to `~/.claude/settings.json`:
+Adicionar ao `~/.claude/settings.json` (global) **ou** `.mcp.json` no projeto (recomendado):
 
 ```json
 {
@@ -151,66 +158,129 @@ Add to `~/.claude/settings.json`:
       "type": "http",
       "url": "http://localhost:8000/mcp",
       "headers": {
-        "Authorization": "Bearer YOUR_ACCESS_TOKEN"
+        "Authorization": "Bearer SEU_TOKEN"
       }
     }
   }
 }
 ```
 
-Now every chat session has `get_context` available. Call it at the start of a session:
+Pronto — toda sessão de Claude Code nesse projeto já tem os tools disponíveis.
+
+---
+
+## MCP Tools
+
+| Tool | Descrição |
+|---|---|
+| `get_context` | Contexto compacto do projeto (~800 tokens). Passa `project` ou omite para listar tudo. Aceita `file` para trazer decisões relevantes ao arquivo. |
+| `log_decision` | Salva um ADR estruturado em `decisions/`. Chamado automaticamente pelo Claude quando detecta uma decisão. |
+| `confirm_draft` | Promove um draft de `drafts/` para `decisions/`. |
+| `list_decisions` | Lista decisões confirmadas de um projeto. |
+| `read_decision` | Lê o conteúdo completo de uma decisão. |
+| `search_vault` | Busca full-text em todos os arquivos do vault. |
+| `semantic_search` | Busca por similaridade semântica (requer `OPENAI_API_KEY`). |
+| `read_vault_file` | Lê qualquer arquivo do vault pelo caminho relativo. |
+| `write_vault_file` | Cria ou atualiza arquivo no vault; auto-commit no git. |
+
+---
+
+## Estrutura do vault
 
 ```
-get_context({ project: "api-payments" })
+vault/
+├── _global/
+│   ├── teams.md          ← quem cuida de cada repo
+│   └── glossary.md       ← termos da empresa
+└── projects/
+    └── {slug}/
+        ├── overview.md   ← stack, dono, status (≤5 linhas — o que get_context lê)
+        ├── context.md    ← contexto estendido para a IA
+        ├── decisions/    ← ADRs confirmados (commitados no git)
+        │   └── 2026-07-14-grpc-sobre-rest.md
+        ├── drafts/       ← gerados pela IA, aguardando confirmação humana
+        ├── activity/     ← logs diários (commits, cards, MRs)
+        │   └── 2026-07-14.md
+        └── architecture/ ← diagramas, notas de sistema
 ```
 
-Or omit the project to list everything:
+Cada escrita é commitada em um repo git privado. Histórico completo, sem vendor lock-in.
 
-```
-get_context()
+---
+
+## Ferramentas locais (sem servidor)
+
+```bash
+# Busca no vault
+node scripts/memoryhub-cli.mjs search "por que grpc"
+
+# Decisões dos últimos 30 dias
+node scripts/memoryhub-cli.mjs decisions api-payments --days=30
+
+# Contexto de um arquivo específico
+node scripts/memoryhub-cli.mjs context src/auth/middleware.ts
+
+# Digest semanal em markdown
+node scripts/weekly-digest.mjs --project=api-payments --output=digest.md
 ```
 
 ---
 
-## Deploy on EKS
+## Integrações
 
-PostgreSQL runs **in-cluster** by default — no RDS setup needed.
+| Integração | O que captura | Doc completo |
+|---|---|---|
+| [git commit + Husky](docs/integrations/git-commits.md) | Resumo AI de cada commit → activity log | → |
+| [Claude Code (MCP)](docs/integrations/mcp-tools.md) | Decisões durante o chat de IA — sem o dev pedir | → |
+| [GitLab](docs/integrations/gitlab.md) | MRs, commits, auto-comment com contexto | → |
+| [Trello](docs/integrations/trello.md) | Cards, comentários, checklists em tempo real | → |
+| [Discord](docs/integrations/discord.md) | Canais de texto + gravação e transcrição de voz | → |
+| [Busca semântica](docs/integrations/semantic-search.md) | pgvector + OpenAI embeddings (opcional) | → |
+| [CLI e ferramentas locais](docs/integrations/local-tools.md) | `memoryhub-cli`, `weekly-digest`, `memoryhub-init` | → |
+
+**→ [Ver diagrama geral e variáveis de ambiente](docs/integrations/README.md)**
+
+Todos os candidatos a decisão vão para `drafts/` primeiro. Humano confirma via UI ou `confirm_draft`.
+
+---
+
+## Deploy no Kubernetes
+
+Suporta K3s (VPS), EKS, GKE, AKS e qualquer K8s genérico — o que muda entre plataformas é o ingress controller e a storage class.
+
+**→ [Guia completo de deploy (K3s / EKS / GKE / AKS)](docs/deploy-k8s.md)**
+
+### Início rápido (K3s — mais simples)
 
 ```bash
-# 1. Create the secrets (no databaseUrl — postgres is bundled)
+# 1. Secrets
 kubectl create secret generic memoryhub-secrets \
   --from-literal=jwtSecret="$(openssl rand -hex 32)" \
-  --from-literal=initialAdminEmail="admin@company.com" \
+  --from-literal=initialAdminEmail="admin@empresa.com" \
   --from-literal=initialAdminPassword="$(openssl rand -base64 16)" \
-  --from-literal=gitVaultRepoUrl="https://oauth2:glpat-TOKEN@gitlab.com/org/vault.git" \
-  --from-literal=gitlabToken="glpat-..." \
-  --from-literal=discordBotToken="..." \
-  --from-literal=discordChannelIds="123456789,987654321" \
-  --from-literal=trelloApiKey="..." \
-  --from-literal=trelloToken="..." \
-  --from-literal=anthropicApiKey="sk-ant-..."
+  --from-literal=gitVaultRepoUrl="https://oauth2:TOKEN@gitlab.com/org/vault.git" \
+  --from-literal=gitlabToken="" \
+  --from-literal=discordBotToken="" \
+  --from-literal=discordChannelIds="" \
+  --from-literal=trelloApiKey="" \
+  --from-literal=trelloToken=""
 
-# 2. Install the Helm chart
+# 2. Instalar (K3s usa Traefik como ingress)
 helm install memoryhub ./helm/memoryhub \
-  --set ingress.host=memoryhub.company.com \
-  --set "ingress.annotations.alb\.ingress\.kubernetes\.io/certificate-arn=arn:aws:acm:..."
+  --set ingress.className=traefik \
+  --set ingress.annotations."cert-manager\.io/cluster-issuer"=letsencrypt-prod \
+  --set ingress.host=memoryhub.empresa.com \
+  --set ingress.tls=true \
+  --set vault.persistence.storageClass=local-path \
+  --set postgres.persistence.storageClass=local-path
 
-# 3. Watch the rollout
+# 3. Acompanhar o rollout
 kubectl rollout status deployment/memoryhub
 ```
 
-To use an external database instead of bundled Postgres:
+### Footprint mínimo
 
-```bash
-helm install memoryhub ./helm/memoryhub \
-  --set postgres.enabled=false \
-  --set ingress.host=memoryhub.company.com
-# And add databaseUrl to memoryhub-secrets
-```
-
-### Resource footprint (minimal by default)
-
-| Component | CPU request | Memory request | Limit |
+| Componente | CPU req | Mem req | Limite |
 |---|---|---|---|
 | memoryhub app | 50m | 128Mi | 300m / 384Mi |
 | postgres | 50m | 64Mi | 200m / 256Mi |
@@ -218,104 +288,63 @@ helm install memoryhub ./helm/memoryhub \
 
 ---
 
-## Adding a project
-
-Via the Web UI (Admin role) or MCP tool:
-
-```
-# Option A — MCP tool
-write_vault_file({
-  path: "projects/api-payments/overview.md",
-  content: "# api-payments\n\n**Stack:** Go, PostgreSQL, gRPC\n**Owner:** backend-team\n**Repo:** gitlab.com/company/api-payments\n**Status:** production\n"
-})
-
-# Option B — REST API
-curl -X POST http://memoryhub.company.com/api/projects \
-  -H "Authorization: Bearer TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"slug":"api-payments","name":"API Payments","stack":"Go, PostgreSQL, gRPC","owner":"backend-team"}'
-```
-
----
-
-## Ingestion sources
-
-MemoryHub watches your existing tools and extracts decision candidates automatically.
-
-| Source | What it reads | How |
-|---|---|---|
-| **GitLab** | Merge Request titles, descriptions, comments | Webhooks + polling via GitLab API |
-| **Discord** | Messages in monitored channels (`#decisions`, `#architecture`), pinned messages | Discord Bot (read-only) |
-| **Trello** | Cards with label "Decision" or "ADR" | Trello Webhooks |
-
-All extracted candidates go to `projects/{slug}/drafts/` with a link to the source. A human confirms via the Web UI or `confirm_draft` MCP tool before they become permanent knowledge.
-
----
-
-## Development
+## Desenvolvimento
 
 ```bash
-# Install deps
 npm install
 cd ui && npm install && cd ..
 
-# Start postgres (or use docker compose up postgres)
+# Postgres local
 docker compose up postgres -d
 
-# Push schema (dev — creates tables without migration files)
+# Schema (sem arquivos de migration)
 npm run db:push
 
-# Start backend (port 8000, hot reload)
+# Backend (porta 8000, hot reload)
 npm run dev
 
-# Start UI dev server (port 5173, proxies /api to 8000)
+# UI dev server (porta 5173, proxy → 8000)
 cd ui && npm run dev
 ```
 
-Run the full build (what Docker does):
+Build completo (igual ao Docker):
 
 ```bash
-npm run build:all   # builds UI → public/ then compiles TS → dist/
+npm run build:all
 npm start
 ```
 
 ---
 
-## Contributing
-
-Pull requests are welcome. For major changes please open an issue first.
-
-1. Fork the repo
-2. Create a branch: `git checkout -b feat/your-feature`
-3. Commit with a clear message
-4. Open a PR describing the change and why
-
-Please keep PRs focused — one thing at a time.
-
----
-
 ## Roadmap
 
-- [x] Multi-project vault (git-backed)
-- [x] MCP server with `get_context`, `log_decision`, `search_vault`, `confirm_draft`
-- [x] Auth (email + JWT + roles)
-- [x] Web UI (login, projects, search, drafts)
-- [x] Helm chart (EKS, bundled Postgres, ingestion CronJob)
-- [ ] GitLab ingestion worker
-- [ ] Discord bot adapter
-- [ ] Trello webhook adapter
-- [ ] Semantic search (pgvector + embeddings)
+- [x] Vault multi-projeto (git-backed, markdown)
+- [x] MCP server — `get_context`, `log_decision`, `search_vault`, `confirm_draft` + 5 tools
+- [x] Auth — email + JWT + roles (Reader / Writer / Admin)
+- [x] Web UI — login, projetos, busca, confirmar/rejeitar drafts
+- [x] Helm chart — EKS, Postgres bundled, ingestion CronJob
+- [x] GitLab adapter — MR / push webhook + polling + auto-comment no MR
+- [x] Discord adapter — bot, polling de canais, gravação de voz + Whisper
+- [x] Trello adapter — webhook em tempo real (cards, comentários, checklists)
+- [x] Activity log diário — append-only por projeto
+- [x] Husky post-commit hook — resumo AI → vault (Haiku ou GPT-4o-mini)
+- [x] `memoryhub init` — setup de projeto em 1 comando
+- [x] CLI local — `search`, `decisions`, `context`, `activity` (sem servidor)
+- [x] Weekly digest script — relatório markdown local
+- [x] `get_context` por arquivo — passa o path, recebe decisões relevantes
+- [x] Busca semântica — pgvector + OpenAI embeddings (opcional)
 - [ ] Slack adapter
 - [ ] Confluence / Notion adapter
+- [ ] Grafo de conhecimento (visualização de conexões entre decisões)
 
 ---
 
-## License
+## Licença
 
-[MIT](LICENSE) — free to use, modify, and distribute.
+[MIT](LICENSE) — livre para usar, modificar e distribuir.
 
 ---
 
 <div align="center">
-  <sub>Built with ❤️ by <a href="https://github.com/tonnysousa">@tonnysousa</a> · <a href="https://nexusops.com.br">Nexus Ops</a></sub>
+  <sub>Feito por <a href="https://github.com/Tonny-Francis">@Tonny-Francis</a></sub>
 </div>

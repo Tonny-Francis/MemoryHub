@@ -61,7 +61,7 @@ secrets:
 # and add databaseUrl to memoryhub-secrets instead.
 postgres:
   enabled: true
-  image: postgres:16-alpine
+  image: pgvector/pgvector:pg16
   database: memoryhub
   user: memoryhub
   # Password is stored in a generated Secret (memoryhub-postgres-secret).

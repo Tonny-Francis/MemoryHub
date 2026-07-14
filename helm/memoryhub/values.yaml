@@ -1,0 +1,126 @@
+# ── Image ─────────────────────────────────────────────────────────────────────
+image:
+  repository: ghcr.io/tonnysousa/memoryhub
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+# ── Replicas ──────────────────────────────────────────────────────────────────
+replicaCount: 1
+
+# ── Service ───────────────────────────────────────────────────────────────────
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+# ── Ingress (ALB on EKS) ──────────────────────────────────────────────────────
+ingress:
+  enabled: true
+  className: alb
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    # alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:...
+  host: memoryhub.example.com
+  tls: true
+
+# ── App config ────────────────────────────────────────────────────────────────
+config:
+  nodeEnv: production
+  port: "8000"
+  jwtExpiresIn: "15m"
+  jwtRefreshExpiresIn: "7d"
+  vaultDir: /data/vault
+  gitSyncIntervalMs: "300000"
+  gitUserName: MemoryHub
+  gitUserEmail: memoryhub@localhost
+  gitlabUrl: https://gitlab.com
+
+# ── Secrets ───────────────────────────────────────────────────────────────────
+# Sensitive values that must exist in a K8s Secret before install.
+# When postgres.enabled=true, databaseUrl is set automatically — omit it.
+#
+# kubectl create secret generic memoryhub-secrets \
+#   --from-literal=jwtSecret="$(openssl rand -hex 32)" \
+#   --from-literal=initialAdminEmail="admin@company.com" \
+#   --from-literal=initialAdminPassword="changeme" \
+#   --from-literal=gitVaultRepoUrl="https://oauth2:TOKEN@gitlab.com/org/vault.git" \
+#   --from-literal=gitlabToken="" \
+#   --from-literal=discordBotToken="" \
+#   --from-literal=discordChannelIds="" \
+#   --from-literal=trelloApiKey="" \
+#   --from-literal=trelloToken="" \
+#   --from-literal=anthropicApiKey=""
+secrets:
+  existingSecret: memoryhub-secrets
+
+# ── PostgreSQL (bundled, runs in-cluster) ─────────────────────────────────────
+# Enabled by default. Set enabled=false to use an external database
+# and add databaseUrl to memoryhub-secrets instead.
+postgres:
+  enabled: true
+  image: postgres:16-alpine
+  database: memoryhub
+  user: memoryhub
+  # Password is stored in a generated Secret (memoryhub-postgres-secret).
+  # Override here only if you need a specific value.
+  password: memoryhub
+  persistence:
+    size: 5Gi
+    storageClass: ""    # leave empty for cluster default
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# ── Vault storage (PVC) ───────────────────────────────────────────────────────
+vault:
+  persistence:
+    enabled: true
+    storageClass: ""
+    size: 2Gi
+    accessMode: ReadWriteOnce
+
+# ── Ingestion CronJob ─────────────────────────────────────────────────────────
+ingestion:
+  enabled: true
+  schedule: "0 */6 * * *"
+  image:
+    repository: ghcr.io/tonnysousa/memoryhub
+    tag: "latest"
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# ── App resources (minimal) ───────────────────────────────────────────────────
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 300m
+    memory: 384Mi
+
+# ── Probes ────────────────────────────────────────────────────────────────────
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 8000
+  initialDelaySeconds: 20
+  periodSeconds: 30
+
+readinessProbe:
+  httpGet:
+    path: /healthz
+    port: 8000
+  initialDelaySeconds: 10
+  periodSeconds: 10

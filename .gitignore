@@ -1,0 +1,23 @@
+node_modules/
+dist/
+ui/dist/
+ui/node_modules/
+.env
+.env.local
+*.env
+prisma/migrations/
+
+# Vault (never commit the actual vault content here)
+/data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/settings.json
+.idea/

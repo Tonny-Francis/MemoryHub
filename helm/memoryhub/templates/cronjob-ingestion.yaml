@@ -1,0 +1,95 @@
+{{- if .Values.ingestion.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "memoryhub.fullname" . }}-ingestion
+  labels:
+    {{- include "memoryhub.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.ingestion.schedule | quote }}
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "memoryhub.selectorLabels" . | nindent 12 }}
+            app.kubernetes.io/component: ingestion
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: ingestion
+              image: "{{ .Values.ingestion.image.repository }}:{{ .Values.ingestion.image.tag }}"
+              command: ["node", "dist/ingestion/worker.js"]
+              env:
+                - name: NODE_ENV
+                  value: {{ .Values.config.nodeEnv | quote }}
+                - name: VAULT_DIR
+                  value: {{ .Values.config.vaultDir | quote }}
+                - name: GITLAB_URL
+                  value: {{ .Values.config.gitlabUrl | quote }}
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      {{- if .Values.postgres.enabled }}
+                      name: {{ include "memoryhub.fullname" . }}-postgres
+                      key: url
+                      {{- else }}
+                      name: {{ .Values.secrets.existingSecret }}
+                      key: databaseUrl
+                      {{- end }}
+                - name: GIT_VAULT_REPO_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.secrets.existingSecret }}
+                      key: gitVaultRepoUrl
+                      optional: true
+                - name: GITLAB_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.secrets.existingSecret }}
+                      key: gitlabToken
+                      optional: true
+                - name: DISCORD_BOT_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.secrets.existingSecret }}
+                      key: discordBotToken
+                      optional: true
+                - name: TRELLO_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.secrets.existingSecret }}
+                      key: trelloApiKey
+                      optional: true
+                - name: TRELLO_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.secrets.existingSecret }}
+                      key: trelloToken
+                      optional: true
+                - name: ANTHROPIC_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.secrets.existingSecret }}
+                      key: anthropicApiKey
+                      optional: true
+              volumeMounts:
+                - name: vault
+                  mountPath: {{ .Values.config.vaultDir }}
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+          volumes:
+            - name: vault
+              {{- if .Values.vault.persistence.enabled }}
+              persistentVolumeClaim:
+                claimName: {{ include "memoryhub.fullname" . }}-vault
+              {{- else }}
+              emptyDir: {}
+              {{- end }}
+{{- end }}

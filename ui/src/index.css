@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface-2: #222;
+    --border: #2e2e2e;
+    --text: #e8e8e8;
+    --text-2: #888;
+    --accent: #4f8ef7;
+    --accent-dim: rgba(79, 142, 247, 0.15);
+    --green: #34c77b;
+    --green-dim: rgba(52, 199, 123, 0.15);
+    --orange: #e89a00;
+    --orange-dim: rgba(232, 154, 0, 0.12);
+    --red: #e05555;
+  }
+
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+}
+
+@layer components {
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; border: none; cursor: pointer; transition: opacity .15s; }
+  .btn:hover { opacity: .85; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-ghost { background: transparent; color: var(--text-2); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: #555; }
+  .btn-danger { background: var(--red); color: #fff; }
+  .input { background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 14px; color: var(--text); width: 100%; outline: none; transition: border-color .15s; }
+  .input:focus { border-color: var(--accent); }
+  .input::placeholder { color: var(--text-2); }
+  .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge-blue { background: var(--accent-dim); color: var(--accent); }
+  .badge-green { background: var(--green-dim); color: var(--green); }
+  .badge-orange { background: var(--orange-dim); color: var(--orange); }
+  .tag { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; color: var(--text-2); }
+}

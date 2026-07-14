@@ -1,0 +1,16 @@
+apiVersion: v2
+name: memoryhub
+description: Engineering knowledge base as MCP — multi-project second brain for software teams
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - mcp
+  - knowledge-base
+  - engineering
+  - adr
+home: https://github.com/tonnysousa/memoryhub
+sources:
+  - https://github.com/tonnysousa/memoryhub
+maintainers:
+  - name: tonnysousa

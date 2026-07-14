@@ -1,0 +1,17 @@
+{{- if .Values.vault.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "memoryhub.fullname" . }}-vault
+  labels:
+    {{- include "memoryhub.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.vault.persistence.accessMode }}
+  {{- if .Values.vault.persistence.storageClass }}
+  storageClassName: {{ .Values.vault.persistence.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.vault.persistence.size }}
+{{- end }}

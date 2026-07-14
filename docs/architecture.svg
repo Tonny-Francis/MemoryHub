@@ -1,0 +1,188 @@
+<svg viewBox="0 0 900 560" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d0d1a"/>
+      <stop offset="100%" style="stop-color:#111827"/>
+    </linearGradient>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#3b5bdb"/>
+    </marker>
+    <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#2f9e44"/>
+    </marker>
+    <marker id="arr3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#e67700"/>
+    </marker>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="560" fill="url(#bg)" rx="16"/>
+
+  <!-- Lane backgrounds -->
+  <!-- Dev -->
+  <rect x="14" y="14" width="190" height="532" rx="10" fill="#ffffff08" stroke="#ffffff12" stroke-width="1"/>
+  <!-- EKS -->
+  <rect x="218" y="14" width="452" height="532" rx="10" fill="#4f8ef708" stroke="#4f8ef720" stroke-width="1"/>
+  <!-- Sources -->
+  <rect x="684" y="14" width="202" height="532" rx="10" fill="#2f9e4408" stroke="#2f9e4420" stroke-width="1"/>
+
+  <!-- Lane labels -->
+  <text x="109" y="36" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff40" letter-spacing="1.5">DEV / AI ASSISTANT</text>
+  <text x="444" y="36" text-anchor="middle" font-size="10" font-weight="700" fill="#4f8ef760" letter-spacing="1.5">EKS CLUSTER — second-brain namespace</text>
+  <text x="785" y="36" text-anchor="middle" font-size="10" font-weight="700" fill="#2f9e4460" letter-spacing="1.5">SOURCES</text>
+
+  <!-- ══════════════ DEV LANE ══════════════ -->
+
+  <!-- Claude Code card -->
+  <rect x="26" y="52" width="166" height="60" rx="8" fill="#1e2540" stroke="#3b5bdb60" stroke-width="1.5"/>
+  <text x="109" y="72" text-anchor="middle" font-size="12" font-weight="700" fill="#748ffc">Claude Code</text>
+  <text x="109" y="87" text-anchor="middle" font-size="10" fill="#9ca3af">MCP global config</text>
+  <text x="109" y="102" text-anchor="middle" font-size="10" fill="#9ca3af">~/.claude/settings.json</text>
+
+  <!-- get_context compact -->
+  <rect x="26" y="128" width="166" height="78" rx="8" fill="#0f1f0f" stroke="#2f9e4450" stroke-width="1.5"/>
+  <text x="109" y="147" text-anchor="middle" font-size="11" font-weight="700" fill="#51cf66">get_context</text>
+  <rect x="36" y="154" width="146" height="44" rx="5" fill="#0a1a0a"/>
+  <text x="46" y="168" font-size="9" fill="#6fcf97" font-family="'SF Mono', monospace">Stack: Go, PG, gRPC</text>
+  <text x="46" y="180" font-size="9" fill="#6fcf97" font-family="'SF Mono', monospace">✓ gRPC (latência) 07-01</text>
+  <text x="46" y="192" font-size="9" fill="#6fcf97" font-family="'SF Mono', monospace">! retry msgs (aberto)</text>
+  <rect x="26" y="209" width="56" height="14" rx="7" fill="#2f9e4430"/>
+  <text x="54" y="220" text-anchor="middle" font-size="9" font-weight="700" fill="#51cf66">~800 tokens</text>
+
+  <!-- MCP tools list -->
+  <rect x="26" y="226" width="166" height="110" rx="8" fill="#1a1a2e" stroke="#3b5bdb30" stroke-width="1"/>
+  <text x="109" y="244" text-anchor="middle" font-size="11" font-weight="700" fill="#748ffc">MCP Tools</text>
+  <text x="36" y="260" font-size="10" fill="#9ca3af" font-family="'SF Mono', monospace">get_context</text>
+  <text x="36" y="274" font-size="10" fill="#9ca3af" font-family="'SF Mono', monospace">log_decision</text>
+  <text x="36" y="288" font-size="10" fill="#9ca3af" font-family="'SF Mono', monospace">search_vault</text>
+  <text x="36" y="302" font-size="10" fill="#9ca3af" font-family="'SF Mono', monospace">confirm_draft</text>
+  <text x="36" y="316" font-size="10" fill="#9ca3af" font-family="'SF Mono', monospace">read/write_vault_file</text>
+
+  <!-- Web UI card -->
+  <rect x="26" y="352" width="166" height="74" rx="8" fill="#1e2540" stroke="#3b5bdb50" stroke-width="1.5"/>
+  <text x="109" y="372" text-anchor="middle" font-size="11" font-weight="700" fill="#748ffc">Web UI</text>
+  <text x="109" y="388" text-anchor="middle" font-size="10" fill="#9ca3af">Login · Projects</text>
+  <text x="109" y="402" text-anchor="middle" font-size="10" fill="#9ca3af">Search · Confirm Drafts</text>
+  <text x="109" y="416" text-anchor="middle" font-size="10" fill="#9ca3af">Manage users</text>
+
+  <!-- Auth badge -->
+  <rect x="26" y="440" width="166" height="38" rx="8" fill="#2c1810" stroke="#e6770050" stroke-width="1"/>
+  <text x="109" y="454" text-anchor="middle" font-size="10" font-weight="700" fill="#e67700">Auth: Email + JWT</text>
+  <text x="109" y="468" text-anchor="middle" font-size="9" fill="#9ca3af">15min access · 7d refresh</text>
+
+  <!-- ══════════════ EKS LANE ══════════════ -->
+
+  <!-- MCP Server -->
+  <rect x="230" y="52" width="200" height="90" rx="8" fill="#1a1f3e" stroke="#3b5bdb80" stroke-width="2"/>
+  <text x="330" y="74" text-anchor="middle" font-size="13" font-weight="700" fill="#748ffc">MCP Server</text>
+  <text x="330" y="92" text-anchor="middle" font-size="10" fill="#9ca3af">Express + @modelcontextprotocol/sdk</text>
+  <text x="330" y="108" text-anchor="middle" font-size="10" fill="#9ca3af">POST /mcp · GET /api · static UI</text>
+  <text x="330" y="123" text-anchor="middle" font-size="10" fill="#9ca3af">JWT auth on all endpoints</text>
+
+  <!-- Vault -->
+  <rect x="230" y="162" width="200" height="160" rx="8" fill="#111a11" stroke="#2f9e4460" stroke-width="1.5"/>
+  <text x="330" y="182" text-anchor="middle" font-size="12" font-weight="700" fill="#51cf66">Vault (Git-backed)</text>
+  <text x="240" y="200" font-size="9.5" fill="#6fcf97" font-family="'SF Mono', monospace">vault/</text>
+  <text x="250" y="214" font-size="9.5" fill="#4dabf7" font-family="'SF Mono', monospace">_global/</text>
+  <text x="260" y="226" font-size="9" fill="#74c0fc" font-family="'SF Mono', monospace">teams.md  glossary.md</text>
+  <text x="250" y="240" font-size="9.5" fill="#4dabf7" font-family="'SF Mono', monospace">projects/{slug}/</text>
+  <text x="260" y="252" font-size="9" fill="#74c0fc" font-family="'SF Mono', monospace">overview.md  context.md</text>
+  <text x="260" y="264" font-size="9" fill="#74c0fc" font-family="'SF Mono', monospace">decisions/  ← ADRs ✓</text>
+  <text x="260" y="276" font-size="9" fill="#ffa94d" font-family="'SF Mono', monospace">drafts/     ← pending ⏳</text>
+  <text x="260" y="288" font-size="9" fill="#74c0fc" font-family="'SF Mono', monospace">architecture/  tasks/</text>
+  <text x="330" y="310" text-anchor="middle" font-size="9" fill="#555">PVC + remote Git push/pull</text>
+
+  <!-- PostgreSQL -->
+  <rect x="450" y="52" width="200" height="90" rx="8" fill="#1a1a12" stroke="#e6770060" stroke-width="1.5"/>
+  <text x="550" y="74" text-anchor="middle" font-size="12" font-weight="700" fill="#ffd43b">PostgreSQL</text>
+  <text x="550" y="92" text-anchor="middle" font-size="10" fill="#9ca3af">In-cluster Deployment + PVC</text>
+  <text x="550" y="108" text-anchor="middle" font-size="10" fill="#9ca3af">Users · Sessions · Projects</text>
+  <text x="550" y="123" text-anchor="middle" font-size="9" fill="#666">50m/64Mi → 200m/256Mi</text>
+
+  <!-- Ingestion Worker -->
+  <rect x="450" y="162" width="200" height="160" rx="8" fill="#1a1210" stroke="#e6770050" stroke-width="1.5"/>
+  <text x="550" y="183" text-anchor="middle" font-size="12" font-weight="700" fill="#ffa94d">Ingestion Worker</text>
+  <text x="550" y="199" text-anchor="middle" font-size="10" fill="#9ca3af">CronJob K8s · every 6h</text>
+  <!-- Steps -->
+  <circle cx="468" cy="218" r="8" fill="#e6770030"/><text x="468" y="222" text-anchor="middle" font-size="9" fill="#ffa94d" font-weight="700">1</text>
+  <text x="482" y="222" font-size="9.5" fill="#d9d9d9">Poll GitLab MRs + commits</text>
+  <circle cx="468" cy="236" r="8" fill="#e6770030"/><text x="468" y="240" text-anchor="middle" font-size="9" fill="#ffa94d" font-weight="700">2</text>
+  <text x="482" y="240" font-size="9.5" fill="#d9d9d9">Read Discord #decisions</text>
+  <circle cx="468" cy="254" r="8" fill="#e6770030"/><text x="468" y="258" text-anchor="middle" font-size="9" fill="#ffa94d" font-weight="700">3</text>
+  <text x="482" y="258" font-size="9.5" fill="#d9d9d9">Scan Trello decision cards</text>
+  <circle cx="468" cy="272" r="8" fill="#3b5bdb30"/><text x="468" y="276" text-anchor="middle" font-size="9" fill="#748ffc" font-weight="700">4</text>
+  <text x="482" y="276" font-size="9.5" fill="#d9d9d9">Claude Haiku extracts ADR</text>
+  <circle cx="468" cy="290" r="8" fill="#2f9e4430"/><text x="468" y="294" text-anchor="middle" font-size="9" fill="#51cf66" font-weight="700">5</text>
+  <text x="482" y="294" font-size="9.5" fill="#d9d9d9">Save to drafts/ → UI confirm</text>
+
+  <!-- ADR format card -->
+  <rect x="230" y="342" width="420" height="100" rx="8" fill="#0f1520" stroke="#3b5bdb30" stroke-width="1"/>
+  <text x="270" y="360" font-size="11" font-weight="700" fill="#748ffc">ADR Format (log_decision)</text>
+  <text x="240" y="378" font-size="9.5" fill="#74c0fc" font-family="'SF Mono', monospace">## Context    what problem triggered this decision</text>
+  <text x="240" y="392" font-size="9.5" fill="#74c0fc" font-family="'SF Mono', monospace">## Decision   what was decided</text>
+  <text x="240" y="406" font-size="9.5" fill="#74c0fc" font-family="'SF Mono', monospace">## Alternatives   what else was considered</text>
+  <text x="240" y="420" font-size="9.5" fill="#74c0fc" font-family="'SF Mono', monospace">## Consequences   + wins  − trade-offs</text>
+
+  <!-- Phase 2 -->
+  <rect x="230" y="456" width="420" height="50" rx="8" fill="#1a0a2e" stroke="#7c3aed40" stroke-width="1" stroke-dasharray="5,3"/>
+  <text x="440" y="476" text-anchor="middle" font-size="11" font-weight="600" fill="#9775fa">Phase 2 — Semantic Search</text>
+  <text x="440" y="494" text-anchor="middle" font-size="10" fill="#666">pgvector + embeddings · semantic_search tool · related_decisions</text>
+
+  <!-- ══════════════ SOURCES LANE ══════════════ -->
+
+  <!-- GitLab -->
+  <rect x="696" y="52" width="176" height="64" rx="8" fill="#1e1610" stroke="#fc6d2660" stroke-width="1.5"/>
+  <text x="784" y="74" text-anchor="middle" font-size="12" font-weight="700" fill="#fc6d26">🦊 GitLab</text>
+  <text x="784" y="90" text-anchor="middle" font-size="10" fill="#9ca3af">Merge Requests · Commits</text>
+  <text x="784" y="105" text-anchor="middle" font-size="9" fill="#666">Webhooks → worker</text>
+
+  <!-- Discord -->
+  <rect x="696" y="132" width="176" height="64" rx="8" fill="#12101e" stroke="#5865f260" stroke-width="1.5"/>
+  <text x="784" y="154" text-anchor="middle" font-size="12" font-weight="700" fill="#7289da">💬 Discord</text>
+  <text x="784" y="170" text-anchor="middle" font-size="10" fill="#9ca3af">#decisions · #architecture</text>
+  <text x="784" y="185" text-anchor="middle" font-size="9" fill="#666">Bot reads pinned threads</text>
+
+  <!-- Trello -->
+  <rect x="696" y="212" width="176" height="64" rx="8" fill="#0a1520" stroke="#0079bf60" stroke-width="1.5"/>
+  <text x="784" y="234" text-anchor="middle" font-size="12" font-weight="700" fill="#4dabf7">📋 Trello</text>
+  <text x="784" y="250" text-anchor="middle" font-size="10" fill="#9ca3af">Boards · "Decision" label</text>
+  <text x="784" y="265" text-anchor="middle" font-size="9" fill="#666">Power-Up webhook</text>
+
+  <!-- Manual -->
+  <rect x="696" y="292" width="176" height="44" rx="8" fill="#111" stroke="#ffffff15" stroke-width="1"/>
+  <text x="784" y="310" text-anchor="middle" font-size="11" font-weight="600" fill="#d9d9d9">Manual (MCP tool)</text>
+  <text x="784" y="326" text-anchor="middle" font-size="9" fill="#666">log_decision during sessions</text>
+
+  <!-- ══════════════ ARROWS ══════════════ -->
+
+  <!-- Dev → MCP (JWT) -->
+  <line x1="192" y1="82" x2="230" y2="82" stroke="#3b5bdb" stroke-width="1.5" marker-end="url(#arr)" stroke-dasharray="none"/>
+  <rect x="196" y="70" width="28" height="13" rx="3" fill="#0d0d1a"/>
+  <text x="210" y="80" text-anchor="middle" font-size="8" fill="#748ffc">JWT</text>
+
+  <!-- Dev → MCP (REST UI) -->
+  <line x1="192" y1="390" x2="220" y2="97" stroke="#3b5bdb" stroke-width="1" marker-end="url(#arr)" stroke-dasharray="4,3" opacity="0.6"/>
+
+  <!-- MCP → Vault -->
+  <line x1="330" y1="142" x2="330" y2="162" stroke="#2f9e44" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+  <!-- MCP → PG -->
+  <line x1="430" y1="82" x2="450" y2="82" stroke="#e67700" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+  <!-- Worker → Vault -->
+  <line x1="450" y1="245" x2="430" y2="245" stroke="#2f9e44" stroke-width="1.5" marker-end="url(#arr2)" stroke-dasharray="5,3"/>
+  <rect x="425" y="232" width="36" height="13" rx="3" fill="#0d0d1a"/>
+  <text x="443" y="242" text-anchor="middle" font-size="8" fill="#51cf66">drafts/</text>
+
+  <!-- Sources → Worker -->
+  <line x1="696" y1="84" x2="650" y2="200" stroke="#fc6d26" stroke-width="1" marker-end="url(#arr3)" stroke-dasharray="4,3" opacity="0.7"/>
+  <line x1="696" y1="164" x2="652" y2="220" stroke="#5865f2" stroke-width="1" marker-end="url(#arr3)" stroke-dasharray="4,3" opacity="0.7"/>
+  <line x1="696" y1="244" x2="654" y2="240" stroke="#0079bf" stroke-width="1" marker-end="url(#arr3)" stroke-dasharray="4,3" opacity="0.7"/>
+
+  <!-- Title -->
+  <text x="450" y="528" text-anchor="middle" font-size="11" fill="#ffffff25">MemoryHub — Engineering Knowledge Base as MCP</text>
+</svg>

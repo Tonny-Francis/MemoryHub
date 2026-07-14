@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: memoryhub
+      POSTGRES_PASSWORD: memoryhub
+      POSTGRES_DB: memoryhub
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U memoryhub"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  memoryhub:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://memoryhub:memoryhub@postgres:5432/memoryhub
+      JWT_SECRET: dev-secret-change-in-production-must-be-32chars
+      VAULT_DIR: /data/vault
+      INITIAL_ADMIN_EMAIL: admin@example.com
+      INITIAL_ADMIN_PASSWORD: changeme123
+      INITIAL_ADMIN_NAME: Admin
+    volumes:
+      - vault_data:/data/vault
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: sh -c "npx prisma migrate deploy && node dist/server.js"
+
+volumes:
+  postgres_data:
+  vault_data:

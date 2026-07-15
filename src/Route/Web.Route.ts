@@ -108,6 +108,15 @@ export function webRouter(): Router {
     }
   });
 
+  router.put('/projects/:slug/decisions/:filename', requireRole('WRITER', 'ADMIN'), async (req, res) => {
+    const schema = z.object({ content: z.string().min(1) });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ error: parsed.error.flatten() }); return; }
+    const { slug, filename } = req.params;
+    await writeFile(`projects/${slug}/decisions/${filename}`, parsed.data.content, `decision: edit ${slug}/${filename}`);
+    res.json({ ok: true });
+  });
+
   router.post('/projects/:slug/decisions', requireRole('WRITER', 'ADMIN'), async (req, res) => {
     const schema = z.object({
       topic: z.string().min(1),
@@ -153,6 +162,24 @@ export function webRouter(): Router {
     const relPath = `projects/${slug}/drafts/${filename}`;
     await writeFile(relPath, parsed.data.content, `draft: ${slug}/${filename}`);
     res.status(201).json({ path: relPath, filename });
+  });
+
+  router.get('/projects/:slug/drafts/:filename', async (req, res) => {
+    try {
+      const content = await readFile(`projects/${req.params.slug}/drafts/${req.params.filename}`);
+      res.json({ content });
+    } catch {
+      res.status(404).json({ error: 'Not found' });
+    }
+  });
+
+  router.put('/projects/:slug/drafts/:filename', requireRole('WRITER', 'ADMIN'), async (req, res) => {
+    const schema = z.object({ content: z.string().min(1) });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ error: parsed.error.flatten() }); return; }
+    const { slug, filename } = req.params;
+    await writeFile(`projects/${slug}/drafts/${filename}`, parsed.data.content, `draft: edit ${slug}/${filename}`);
+    res.json({ ok: true });
   });
 
   router.post('/projects/:slug/drafts/:filename/confirm', requireRole('WRITER', 'ADMIN'), async (req, res) => {

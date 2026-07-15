@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { getDecision, getProject, type DecisionFile, type ProjectDetail } from '../api/client';
+import { getDecision, getProject, updateDecision, type DecisionFile, type ProjectDetail } from '../api/client';
 
 function miniMd(raw: string): string {
   return raw
@@ -19,12 +19,28 @@ function miniMd(raw: string): string {
 function DecisionModal({ slug, filename, onClose }: { slug: string; filename: string; onClose: () => void }) {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     getDecision(slug, filename)
       .then((d) => setContent(d.content))
       .finally(() => setLoading(false));
   }, [slug, filename]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError('');
+    try {
+      await updateDecision(slug, filename, content);
+      setEditing(false);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div
@@ -34,19 +50,54 @@ function DecisionModal({ slug, filename, onClose }: { slug: string; filename: st
     >
       <div
         className="card"
-        style={{ width: '100%', maxWidth: 680, maxHeight: '80vh', overflow: 'auto', position: 'relative' }}
+        style={{ width: '100%', maxWidth: 720, maxHeight: '85vh', display: 'flex', flexDirection: 'column', position: 'relative' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
           <span className="tag">{filename}</span>
-          <button className="btn btn-ghost" onClick={onClose} style={{ padding: '2px 8px', fontSize: 12 }}>
-            ✕ Close
-          </button>
+          <div className="flex gap-2 items-center">
+            {!loading && !editing && (
+              <button className="btn btn-ghost" onClick={() => setEditing(true)} style={{ padding: '2px 8px', fontSize: 12 }}>
+                Edit
+              </button>
+            )}
+            <button className="btn btn-ghost" onClick={onClose} style={{ padding: '2px 8px', fontSize: 12 }}>
+              ✕ Close
+            </button>
+          </div>
         </div>
         {loading ? (
           <p style={{ color: 'var(--text-2)' }}>Loading…</p>
+        ) : editing ? (
+          <>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              style={{
+                flex: 1,
+                minHeight: 380,
+                fontFamily: 'monospace',
+                fontSize: 12,
+                lineHeight: 1.6,
+                background: 'var(--surface-2)',
+                color: 'var(--text)',
+                border: '1px solid var(--border)',
+                borderRadius: 6,
+                padding: 12,
+                resize: 'vertical',
+                outline: 'none',
+              }}
+            />
+            {error && <p style={{ color: 'var(--red)', fontSize: 12, marginTop: 8 }}>{error}</p>}
+            <div className="flex gap-2 justify-end mt-3">
+              <button className="btn btn-ghost" onClick={() => setEditing(false)} style={{ fontSize: 12 }}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleSave} disabled={saving} style={{ fontSize: 12 }}>
+                {saving ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          </>
         ) : (
-          <div dangerouslySetInnerHTML={{ __html: miniMd(content) }} />
+          <div style={{ overflow: 'auto', flex: 1 }} dangerouslySetInnerHTML={{ __html: miniMd(content) }} />
         )}
       </div>
     </div>

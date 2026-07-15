@@ -1,6 +1,96 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { confirmDraft, getProject, rejectDraft, type DecisionFile } from '../api/client';
+import { confirmDraft, getDraft, getProject, rejectDraft, updateDraft, type DecisionFile } from '../api/client';
+
+function EditDraftModal({
+  slug,
+  filename,
+  onClose,
+  onSaved,
+}: {
+  slug: string;
+  filename: string;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [content, setContent] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    getDraft(slug, filename)
+      .then((d) => setContent(d.content))
+      .finally(() => setLoading(false));
+  }, [slug, filename]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError('');
+    try {
+      await updateDraft(slug, filename, content);
+      onSaved();
+      onClose();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}
+      onClick={onClose}
+    >
+      <div
+        className="card"
+        style={{ width: '100%', maxWidth: 720, maxHeight: '85vh', display: 'flex', flexDirection: 'column', padding: 24 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Edit Draft</span>
+            <span className="tag" style={{ marginLeft: 8, fontFamily: 'monospace', fontSize: 11 }}>{filename}</span>
+          </div>
+          <button className="btn btn-ghost" onClick={onClose} style={{ padding: '2px 8px', fontSize: 12 }}>✕ Close</button>
+        </div>
+
+        {loading ? (
+          <p style={{ color: 'var(--text-2)', fontSize: 13 }}>Loading…</p>
+        ) : (
+          <>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              style={{
+                flex: 1,
+                minHeight: 380,
+                fontFamily: 'monospace',
+                fontSize: 12,
+                lineHeight: 1.6,
+                background: 'var(--surface-2)',
+                color: 'var(--text)',
+                border: '1px solid var(--border)',
+                borderRadius: 6,
+                padding: 12,
+                resize: 'vertical',
+                outline: 'none',
+              }}
+            />
+            {error && <p style={{ color: 'var(--red)', fontSize: 12, marginTop: 8 }}>{error}</p>}
+            <div className="flex gap-2 justify-end mt-3">
+              <button className="btn btn-ghost" onClick={onClose} style={{ fontSize: 12 }}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleSave} disabled={saving} style={{ fontSize: 12 }}>
+                {saving ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export function DraftsPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -8,6 +98,7 @@ export function DraftsPage() {
   const [drafts, setDrafts] = useState<DecisionFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState<string | null>(null);
+  const [editingFilename, setEditingFilename] = useState<string | null>(null);
 
   useEffect(() => {
     if (!slug) return;
@@ -41,6 +132,15 @@ export function DraftsPage() {
 
   return (
     <div>
+      {editingFilename && (
+        <EditDraftModal
+          slug={slug!}
+          filename={editingFilename}
+          onClose={() => setEditingFilename(null)}
+          onSaved={() => setEditingFilename(null)}
+        />
+      )}
+
       <div className="flex items-center gap-2 mb-2">
         <Link to="/" style={{ fontSize: 13, color: 'var(--text-2)' }}>Projects</Link>
         <span style={{ color: 'var(--border)' }}>/</span>
@@ -87,6 +187,14 @@ export function DraftsPage() {
                     style={{ fontSize: 12 }}
                   >
                     Reject
+                  </button>
+                  <button
+                    className="btn btn-ghost"
+                    onClick={() => setEditingFilename(d.filename)}
+                    disabled={working === d.filename}
+                    style={{ fontSize: 12 }}
+                  >
+                    Edit
                   </button>
                   <button
                     className="btn btn-primary"

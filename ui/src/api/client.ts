@@ -126,6 +126,18 @@ export async function createDecision(slug: string, data: { topic: string; title:
   return request<{ path: string }>(`/projects/${slug}/decisions`, { method: 'POST', body: JSON.stringify(data) });
 }
 
+export async function getDraft(slug: string, filename: string): Promise<{ content: string }> {
+  return request<{ content: string }>(`/projects/${slug}/drafts/${filename}`);
+}
+
+export async function updateDraft(slug: string, filename: string, content: string): Promise<void> {
+  await request(`/projects/${slug}/drafts/${filename}`, { method: 'PUT', body: JSON.stringify({ content }) });
+}
+
+export async function updateDecision(slug: string, filename: string, content: string): Promise<void> {
+  await request(`/projects/${slug}/decisions/${filename}`, { method: 'PUT', body: JSON.stringify({ content }) });
+}
+
 export async function confirmDraft(slug: string, filename: string): Promise<void> {
   await request(`/projects/${slug}/drafts/${filename}/confirm`, { method: 'POST' });
 }

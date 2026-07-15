@@ -110,6 +110,16 @@ spec:
                   name: {{ .Values.secrets.existingSecret }}
                   key: gitlabToken
                   optional: true
+            - name: GITLAB_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.existingSecret }}
+                  key: gitlabWebhookSecret
+                  optional: true
+            {{- if .Values.config.gitlabProjectIds }}
+            - name: GITLAB_PROJECT_IDS
+              value: {{ .Values.config.gitlabProjectIds | quote }}
+            {{- end }}
             - name: DISCORD_BOT_TOKEN
               valueFrom:
                 secretKeyRef:

@@ -35,6 +35,7 @@ config:
   gitUserName: MemoryHub
   gitUserEmail: memoryhub@localhost
   gitlabUrl: https://gitlab.com
+  gitlabProjectIds: ""   # "123456" or "123456,789012"
 
 # ── Secrets ───────────────────────────────────────────────────────────────────
 # Sensitive values that must exist in a K8s Secret before install.

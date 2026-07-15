@@ -5,7 +5,7 @@ ui/node_modules/
 .env
 .env.local
 *.env
-prisma/migrations/
+# prisma/migrations/ — must be committed for prisma migrate deploy
 
 # Vault (never commit the actual vault content here)
 /data/

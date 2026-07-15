@@ -1,12 +1,17 @@
 import {
+  ActionRowBuilder,
   Client,
   Events,
   GatewayIntentBits,
+  ModalBuilder,
   REST,
   Routes,
   SlashCommandBuilder,
+  TextInputBuilder,
+  TextInputStyle,
   type ChatInputCommandInteraction,
   type Guild,
+  type ModalSubmitInteraction,
 } from 'discord.js';
 import {
   EndBehaviorType,
@@ -49,6 +54,7 @@ async function getApiToken(): Promise<string | null> {
     return null;
   }
 }
+
 import { cleanupWav, writeWav } from './VoiceRecorder/AudioWriter.js';
 import { buildFullTranscript, extractDecisionDraft, transcribeFile, type SpeakerTranscript } from './VoiceRecorder/Transcriber.js';
 
@@ -70,6 +76,12 @@ const commands = [
   new SlashCommandBuilder()
     .setName('leave')
     .setDescription('Stop transcribing and save draft to MemoryHub'),
+  new SlashCommandBuilder()
+    .setName('decision')
+    .setDescription('Log a confirmed decision to MemoryHub'),
+  new SlashCommandBuilder()
+    .setName('draft')
+    .setDescription('Log a draft (pending review) to MemoryHub'),
 ].map((c) => c.toJSON());
 
 const client = new Client({
@@ -97,6 +109,82 @@ async function registerCommands(clientId: string) {
     logger.info('Slash commands registered globally');
   } catch (err) {
     logger.warn({ err }, 'Failed to register slash commands');
+  }
+}
+
+function buildEntryModal(customId: string, title: string): ModalBuilder {
+  const modal = new ModalBuilder().setCustomId(customId).setTitle(title);
+  modal.addComponents(
+    new ActionRowBuilder<TextInputBuilder>().addComponents(
+      new TextInputBuilder()
+        .setCustomId('project')
+        .setLabel('Project slug')
+        .setStyle(TextInputStyle.Short)
+        .setPlaceholder('my-project')
+        .setRequired(true),
+    ),
+    new ActionRowBuilder<TextInputBuilder>().addComponents(
+      new TextInputBuilder()
+        .setCustomId('title')
+        .setLabel('Title')
+        .setStyle(TextInputStyle.Short)
+        .setPlaceholder('Short description of the decision')
+        .setRequired(true),
+    ),
+    new ActionRowBuilder<TextInputBuilder>().addComponents(
+      new TextInputBuilder()
+        .setCustomId('content')
+        .setLabel('Content (markdown)')
+        .setStyle(TextInputStyle.Paragraph)
+        .setPlaceholder('## Context\n...\n## Decision\n...')
+        .setRequired(true),
+    ),
+  );
+  return modal;
+}
+
+async function handleModalSubmit(interaction: ModalSubmitInteraction) {
+  await interaction.deferReply({ ephemeral: true });
+
+  const project = interaction.fields.getTextInputValue('project').trim();
+  const title = interaction.fields.getTextInputValue('title').trim();
+  const content = interaction.fields.getTextInputValue('content').trim();
+  const date = new Date().toISOString().slice(0, 10);
+  const isDraft = interaction.customId === 'draft-modal';
+
+  const token = await getApiToken();
+  if (!env.MEMORYHUB_API_URL || !token) {
+    await interaction.editReply('MemoryHub API not configured — set `MEMORYHUB_API_URL`, `MEMORYHUB_EMAIL`, and `MEMORYHUB_PASSWORD`.');
+    return;
+  }
+
+  const endpoint = isDraft
+    ? `${env.MEMORYHUB_API_URL}/api/projects/${project}/drafts`
+    : `${env.MEMORYHUB_API_URL}/api/projects/${project}/decisions`;
+
+  const body = isDraft
+    ? { topic: title, content, date }
+    : { topic: title, content, date };
+
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({})) as { error?: string };
+      await interaction.editReply(`Failed: ${err.error ?? `HTTP ${res.status}`}`);
+      return;
+    }
+
+    const saved = await res.json() as { filename: string };
+    const label = isDraft ? 'Draft' : 'Decision';
+    await interaction.editReply(`${label} saved: \`${saved.filename}\``);
+  } catch (err) {
+    logger.error({ err }, 'Failed to save to MemoryHub');
+    await interaction.editReply('Could not reach MemoryHub API.');
   }
 }
 
@@ -248,9 +336,18 @@ client.once(Events.ClientReady, async (c) => {
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
-  if (interaction.commandName === 'join') await handleJoin(interaction).catch((err) => logger.error({ err }, 'join error'));
-  if (interaction.commandName === 'leave') await handleLeave(interaction).catch((err) => logger.error({ err }, 'leave error'));
+  if (interaction.isChatInputCommand()) {
+    if (interaction.commandName === 'join') await handleJoin(interaction).catch((err) => logger.error({ err }, 'join error'));
+    if (interaction.commandName === 'leave') await handleLeave(interaction).catch((err) => logger.error({ err }, 'leave error'));
+    if (interaction.commandName === 'decision') await interaction.showModal(buildEntryModal('decision-modal', 'Log Decision')).catch((err) => logger.error({ err }, 'decision modal error'));
+    if (interaction.commandName === 'draft') await interaction.showModal(buildEntryModal('draft-modal', 'Log Draft')).catch((err) => logger.error({ err }, 'draft modal error'));
+  }
+
+  if (interaction.isModalSubmit()) {
+    if (interaction.customId === 'decision-modal' || interaction.customId === 'draft-modal') {
+      await handleModalSubmit(interaction).catch((err) => logger.error({ err }, 'modal submit error'));
+    }
+  }
 });
 
 client.login(env.DISCORD_BOT_TOKEN);

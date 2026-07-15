@@ -32,7 +32,7 @@ RUN npm ci --omit=dev && npx prisma generate
 COPY --from=backend-builder /app/dist ./dist
 
 # UI build → served as static from Express
-COPY --from=ui-builder /app/ui/dist ./public
+COPY --from=ui-builder /app/public ./public
 
 EXPOSE 8000
 

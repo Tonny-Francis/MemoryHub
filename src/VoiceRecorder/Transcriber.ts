@@ -45,7 +45,7 @@ export async function transcribeFile(wavPath: string): Promise<string> {
       'Content-Type': `multipart/form-data; boundary=${boundary}`,
       'Content-Length': String(body.length),
     },
-    body,
+    body: body as unknown as BodyInit,
   });
 
   if (!response.ok) {

@@ -16,13 +16,11 @@ service:
 # ── Ingress (ALB on EKS) ──────────────────────────────────────────────────────
 ingress:
   enabled: true
-  className: alb
+  className: nginx-internal
   annotations:
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
-    alb.ingress.kubernetes.io/ssl-redirect: "443"
-    # alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:...
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+  tls: false
   host: memoryhub.example.com
   tls: true
 

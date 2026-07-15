@@ -11,6 +11,7 @@ import { env } from './Config/Env.Config.js';
 import { logger } from './Config/Logger.Config.js';
 import { authMiddleware } from './Middleware/Auth.Middleware.js';
 import { authRouter } from './Route/Auth.Route.js';
+import { graphRouter } from './Route/Graph.Route.js';
 import { ingestRouter } from './Route/Ingest.Route.js';
 import { webRouter } from './Route/Web.Route.js';
 import { seedAdminIfEmpty } from './Service/Auth.Service.js';
@@ -60,6 +61,9 @@ async function main(): Promise<void> {
 
   // Ingest webhooks — public (signature-verified per route)
   app.use('/api/ingest', ingestRouter());
+
+  // Graph API
+  app.use('/api/graph', graphRouter());
 
   // All other API routes require a valid JWT
   app.use('/api', authMiddleware, webRouter());

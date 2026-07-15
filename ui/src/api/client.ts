@@ -152,6 +152,18 @@ export async function search(q: string, project?: string): Promise<SearchMatch[]
   return res.results as SearchMatch[];
 }
 
+// ── Graph ─────────────────────────────────────────────────────────────────────
+
+export interface GraphNode { id: string; label: string; project: string; date: string; path: string; type: 'decision' | 'draft'; }
+export interface GraphEdge { id: string; source: string; target: string; weight: number; keywords: string[]; }
+export interface GraphData { nodes: GraphNode[]; edges: GraphEdge[]; }
+
+export async function getGraph(project?: string): Promise<GraphData> {
+  const params = new URLSearchParams();
+  if (project) params.set('project', project);
+  return request<GraphData>(`/graph${params.size ? `?${params}` : ''}`);
+}
+
 // ── Admin ─────────────────────────────────────────────────────────────────────
 
 export async function getUsers(): Promise<User[]> {

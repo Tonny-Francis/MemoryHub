@@ -3,6 +3,7 @@ import { isLoggedIn } from './api/client';
 import { Layout } from './components/Layout';
 import { DashboardPage } from './pages/DashboardPage';
 import { DraftsPage } from './pages/DraftsPage';
+import { GraphPage } from './pages/GraphPage';
 import { LoginPage } from './pages/LoginPage';
 import { ProjectPage } from './pages/ProjectPage';
 import { SearchPage } from './pages/SearchPage';
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="projects/:slug" element={<ProjectPage />} />
           <Route path="projects/:slug/drafts" element={<DraftsPage />} />
           <Route path="search" element={<SearchPage />} />
+          <Route path="graph" element={<GraphPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

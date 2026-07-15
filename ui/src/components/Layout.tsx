@@ -19,6 +19,7 @@ export function Layout() {
   const navItems = [
     { to: '/', label: 'Projects' },
     { to: '/search', label: 'Search' },
+    { to: '/graph', label: 'Graph' },
   ];
 
   return (

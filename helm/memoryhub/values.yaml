@@ -1,7 +1,7 @@
 # ── Image ─────────────────────────────────────────────────────────────────────
 image:
   repository: ghcr.io/tonny-francis/memoryhub
-  tag: "0.1.17"
+  tag: "0.1.18"
   pullPolicy: Always
 
 # ── Replicas ──────────────────────────────────────────────────────────────────
@@ -69,7 +69,7 @@ postgres:
   password: memoryhub
   persistence:
     size: 5Gi
-    storageClass: ""    # leave empty for cluster default
+    storageClass: "gp2"
   resources:
     requests:
       cpu: 50m
@@ -92,7 +92,7 @@ ingestion:
   schedule: "0 */6 * * *"
   image:
     repository: ghcr.io/tonny-francis/memoryhub
-    tag: "0.1.17"
+    tag: "0.1.18"
   resources:
     requests:
       cpu: 50m

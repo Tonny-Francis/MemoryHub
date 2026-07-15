@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { getDecision, getProject, updateDecision, type DecisionFile, type ProjectDetail } from '../api/client';
+import { deleteDecision, getDecision, getProject, updateDecision, type DecisionFile, type ProjectDetail } from '../api/client';
 
 function miniMd(raw: string): string {
   return raw
@@ -16,11 +16,22 @@ function miniMd(raw: string): string {
     .join('');
 }
 
-function DecisionModal({ slug, filename, onClose }: { slug: string; filename: string; onClose: () => void }) {
+function DecisionModal({
+  slug,
+  filename,
+  onClose,
+  onDeleted,
+}: {
+  slug: string;
+  filename: string;
+  onClose: () => void;
+  onDeleted: () => void;
+}) {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -42,6 +53,18 @@ function DecisionModal({ slug, filename, onClose }: { slug: string; filename: st
     }
   };
 
+  const handleDelete = async () => {
+    if (!confirm(`Delete decision "${filename}"? This cannot be undone.`)) return;
+    setDeleting(true);
+    try {
+      await deleteDecision(slug, filename);
+      onDeleted();
+    } catch (e) {
+      setError((e as Error).message);
+      setDeleting(false);
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 flex items-center justify-center"
@@ -57,9 +80,19 @@ function DecisionModal({ slug, filename, onClose }: { slug: string; filename: st
           <span className="tag">{filename}</span>
           <div className="flex gap-2 items-center">
             {!loading && !editing && (
-              <button className="btn btn-ghost" onClick={() => setEditing(true)} style={{ padding: '2px 8px', fontSize: 12 }}>
-                Edit
-              </button>
+              <>
+                <button
+                  className="btn btn-ghost"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  style={{ padding: '2px 8px', fontSize: 12, color: 'var(--red)' }}
+                >
+                  {deleting ? 'Deleting…' : 'Delete'}
+                </button>
+                <button className="btn btn-ghost" onClick={() => setEditing(true)} style={{ padding: '2px 8px', fontSize: 12 }}>
+                  Edit
+                </button>
+              </>
             )}
             <button className="btn btn-ghost" onClick={onClose} style={{ padding: '2px 8px', fontSize: 12 }}>
               ✕ Close
@@ -97,14 +130,17 @@ function DecisionModal({ slug, filename, onClose }: { slug: string; filename: st
             </div>
           </>
         ) : (
-          <div style={{ overflow: 'auto', flex: 1 }} dangerouslySetInnerHTML={{ __html: miniMd(content) }} />
+          <>
+            <div style={{ overflow: 'auto', flex: 1 }} dangerouslySetInnerHTML={{ __html: miniMd(content) }} />
+            {error && <p style={{ color: 'var(--red)', fontSize: 12, marginTop: 8 }}>{error}</p>}
+          </>
         )}
       </div>
     </div>
   );
 }
 
-function DecisionRow({ d, slug }: { d: DecisionFile; slug: string }) {
+function DecisionRow({ d, slug, onDeleted }: { d: DecisionFile; slug: string; onDeleted: () => void }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -119,7 +155,14 @@ function DecisionRow({ d, slug }: { d: DecisionFile; slug: string }) {
         <span style={{ fontSize: 13, color: 'var(--text)', flex: 1 }}>{d.title}</span>
         <span style={{ fontSize: 11, color: 'var(--accent)' }}>view →</span>
       </div>
-      {open && <DecisionModal slug={slug} filename={d.filename} onClose={() => setOpen(false)} />}
+      {open && (
+        <DecisionModal
+          slug={slug}
+          filename={d.filename}
+          onClose={() => setOpen(false)}
+          onDeleted={() => { setOpen(false); onDeleted(); }}
+        />
+      )}
     </>
   );
 }
@@ -137,6 +180,10 @@ export function ProjectPage() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [slug]);
+
+  const removeDecision = (filename: string) => {
+    setProject((prev) => prev ? { ...prev, decisions: prev.decisions.filter((d) => d.filename !== filename) } : prev);
+  };
 
   if (loading) return <p style={{ color: 'var(--text-2)' }}>Loading…</p>;
   if (error || !project) return <p style={{ color: 'var(--red)' }}>{error || 'Not found'}</p>;
@@ -189,7 +236,7 @@ export function ProjectPage() {
           ) : (
             <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
               {project.decisions.map((d) => (
-                <DecisionRow key={d.filename} d={d} slug={slug!} />
+                <DecisionRow key={d.filename} d={d} slug={slug!} onDeleted={() => removeDecision(d.filename)} />
               ))}
             </div>
           )}

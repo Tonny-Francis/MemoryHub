@@ -138,6 +138,10 @@ export async function updateDecision(slug: string, filename: string, content: st
   await request(`/projects/${slug}/decisions/${filename}`, { method: 'PUT', body: JSON.stringify({ content }) });
 }
 
+export async function deleteDecision(slug: string, filename: string): Promise<void> {
+  await request(`/projects/${slug}/decisions/${filename}`, { method: 'DELETE' });
+}
+
 export async function confirmDraft(slug: string, filename: string): Promise<void> {
   await request(`/projects/${slug}/drafts/${filename}/confirm`, { method: 'POST' });
 }

@@ -117,6 +117,12 @@ export function webRouter(): Router {
     res.json({ ok: true });
   });
 
+  router.delete('/projects/:slug/decisions/:filename', requireRole('WRITER', 'ADMIN'), async (req, res) => {
+    const { slug, filename } = req.params;
+    await deleteFile(`projects/${slug}/decisions/${filename}`, `decision: delete ${slug}/${filename}`);
+    res.json({ ok: true });
+  });
+
   router.post('/projects/:slug/decisions', requireRole('WRITER', 'ADMIN'), async (req, res) => {
     const schema = z.object({
       topic: z.string().min(1),

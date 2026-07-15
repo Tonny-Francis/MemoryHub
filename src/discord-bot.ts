@@ -16,8 +16,16 @@ import {
   type VoiceConnection,
 } from '@discordjs/voice';
 import prism from 'prism-media';
-import { env } from './Config/Env.Config.js';
-import { logger } from './Config/Logger.Config.js';
+import 'dotenv/config';
+import pino from 'pino';
+
+const logger = pino({ level: 'info' });
+
+const env = {
+  DISCORD_BOT_TOKEN: process.env.DISCORD_BOT_TOKEN,
+  MEMORYHUB_API_URL: process.env.MEMORYHUB_API_URL,
+  MEMORYHUB_API_TOKEN: process.env.MEMORYHUB_API_TOKEN,
+};
 import { cleanupWav, writeWav } from './VoiceRecorder/AudioWriter.js';
 import { buildFullTranscript, extractDecisionDraft, transcribeFile, type SpeakerTranscript } from './VoiceRecorder/Transcriber.js';
 

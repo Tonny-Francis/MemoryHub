@@ -1,4 +1,4 @@
-{{- if .Values.discordBot.enabled }}
+{{- if and .Values.discordBot .Values.discordBot.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

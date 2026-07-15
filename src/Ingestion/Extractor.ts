@@ -12,7 +12,7 @@ function looksLikeDecision(item: IngestItem): boolean {
 
 function formatRawDraft(item: IngestItem): string {
   const date = item.createdAt.slice(0, 10);
-  const lines = [
+  return [
     `# Draft: ${item.title}`,
     '',
     `**Source:** ${item.source}${item.url ? ` — [link](${item.url})` : ''}`,
@@ -22,8 +22,7 @@ function formatRawDraft(item: IngestItem): string {
     '---',
     '',
     item.body,
-  ];
-  return lines.join('\n');
+  ].join('\n');
 }
 
 const ADR_PROMPT = `You are an ADR (Architecture Decision Record) extractor.
@@ -51,14 +50,39 @@ Proposed
 
 If NO (the content is NOT about a technical/architectural decision), respond with exactly the word: NOT_A_DECISION`;
 
+async function extractWithAnthropic(userContent: string): Promise<string | null> {
+  const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY! });
+  const message = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 1024,
+    messages: [{ role: 'user', content: `${ADR_PROMPT}\n\n---\n\n${userContent}` }],
+  });
+  const text = message.content.find((b) => b.type === 'text')?.text?.trim() ?? '';
+  return text && text !== 'NOT_A_DECISION' ? text : null;
+}
+
+async function extractWithGroq(userContent: string): Promise<string | null> {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.GROQ_API_KEY!}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: `${ADR_PROMPT}\n\n---\n\n${userContent}` }],
+    }),
+  });
+
+  if (!res.ok) throw new Error(`Groq API ${res.status}: ${await res.text()}`);
+  const data = await res.json() as { choices: { message: { content: string } }[] };
+  const text = data.choices[0]?.message?.content?.trim() ?? '';
+  return text && text !== 'NOT_A_DECISION' ? text : null;
+}
+
 export async function extractAdr(item: IngestItem): Promise<string | null> {
   if (!looksLikeDecision(item)) return null;
-
-  if (!env.ANTHROPIC_API_KEY) {
-    return formatRawDraft(item);
-  }
-
-  const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
 
   const userContent = [
     `Source: ${item.source}`,
@@ -69,15 +93,7 @@ export async function extractAdr(item: IngestItem): Promise<string | null> {
     item.body,
   ].join('\n');
 
-  const message = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 1024,
-    messages: [
-      { role: 'user', content: `${ADR_PROMPT}\n\n---\n\n${userContent}` },
-    ],
-  });
-
-  const text = message.content.find((b) => b.type === 'text')?.text?.trim() ?? '';
-  if (!text || text === 'NOT_A_DECISION') return null;
-  return text;
+  if (env.ANTHROPIC_API_KEY) return extractWithAnthropic(userContent);
+  if (env.GROQ_API_KEY) return extractWithGroq(userContent);
+  return formatRawDraft(item);
 }

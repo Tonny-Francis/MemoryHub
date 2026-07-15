@@ -10,27 +10,38 @@ export interface SpeakerTranscript {
   text: string;
 }
 
-export async function transcribeFile(wavPath: string): Promise<string> {
-  if (!env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY not set');
-
-  const formData = new (await import('node:stream')).PassThrough();
+function buildMultipartBody(wavPath: string, model: string): { body: Buffer; boundary: string } {
   const boundary = `----FormBoundary${Math.random().toString(36).slice(2)}`;
-
   const fileBuffer = fs.readFileSync(wavPath);
   const filename = wavPath.split('/').pop() ?? 'audio.wav';
-
   const body = Buffer.concat([
     Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${filename}"\r\nContent-Type: audio/wav\r\n\r\n`),
     fileBuffer,
-    Buffer.from(`\r\n--${boundary}\r\nContent-Disposition: form-data; name="model"\r\n\r\nwhisper-1\r\n`),
+    Buffer.from(`\r\n--${boundary}\r\nContent-Disposition: form-data; name="model"\r\n\r\n${model}\r\n`),
     Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="language"\r\n\r\npt\r\n`),
     Buffer.from(`--${boundary}--\r\n`),
   ]);
+  return { body, boundary };
+}
 
-  const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+export async function transcribeFile(wavPath: string): Promise<string> {
+  if (!env.OPENAI_API_KEY && !env.GROQ_API_KEY) {
+    throw new Error('Set OPENAI_API_KEY or GROQ_API_KEY to enable transcription');
+  }
+
+  const useGroq = !env.OPENAI_API_KEY && !!env.GROQ_API_KEY;
+  const apiUrl = useGroq
+    ? 'https://api.groq.com/openai/v1/audio/transcriptions'
+    : 'https://api.openai.com/v1/audio/transcriptions';
+  const apiKey = useGroq ? env.GROQ_API_KEY! : env.OPENAI_API_KEY!;
+  const model = useGroq ? 'whisper-large-v3' : 'whisper-1';
+
+  const { body, boundary } = buildMultipartBody(wavPath, model);
+
+  const response = await fetch(apiUrl, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+      Authorization: `Bearer ${apiKey}`,
       'Content-Type': `multipart/form-data; boundary=${boundary}`,
       'Content-Length': String(body.length),
     },
@@ -39,7 +50,7 @@ export async function transcribeFile(wavPath: string): Promise<string> {
 
   if (!response.ok) {
     const err = await response.text();
-    throw new Error(`Whisper API ${response.status}: ${err}`);
+    throw new Error(`Transcription API ${response.status}: ${err}`);
   }
 
   const data = await response.json() as { text: string };

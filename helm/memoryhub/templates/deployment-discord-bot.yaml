@@ -51,6 +51,18 @@ spec:
                   name: {{ include "memoryhub.fullname" . }}-secrets
                   key: initialAdminPassword
                   optional: true
+            - name: GROQ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "memoryhub.fullname" . }}-secrets
+                  key: groqApiKey
+                  optional: true
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "memoryhub.fullname" . }}-secrets
+                  key: openaiApiKey
+                  optional: true
           resources:
             requests:
               cpu: 50m

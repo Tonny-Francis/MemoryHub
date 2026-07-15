@@ -7,7 +7,7 @@ COPY ui/ ./
 RUN npm run build
 
 # ── Stage 2: Build backend ────────────────────────────────────────────────────
-FROM node:20-alpine AS backend-builder
+FROM node:20-slim AS backend-builder
 WORKDIR /app
 COPY package*.json ./
 COPY prisma/ ./prisma/
@@ -18,13 +18,13 @@ COPY src/ ./src/
 RUN npm run build
 
 # ── Stage 3: Runtime ─────────────────────────────────────────────────────────
-FROM node:20-alpine AS runtime
+FROM node:20-slim AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Patch Alpine OS vulnerabilities (libssl/libcrypto)
-RUN apk upgrade --no-cache libcrypto3 libssl3
+RUN apt-get update -qq && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
 # Only production deps
 COPY package*.json ./
@@ -40,6 +40,6 @@ COPY --from=ui-builder /app/public ./public
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
-  CMD wget -qO- http://localhost:8000/healthz || exit 1
+  CMD node -e "require('http').get('http://localhost:8000/healthz', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
 
 CMD ["node", "dist/server.js"]

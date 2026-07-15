@@ -2,7 +2,7 @@
 image:
   repository: ghcr.io/tonny-francis/memoryhub
   tag: "latest"
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 
 # ── Replicas ──────────────────────────────────────────────────────────────────
 replicaCount: 1

@@ -23,6 +23,9 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
+# Patch Alpine OS vulnerabilities (libssl/libcrypto)
+RUN apk upgrade --no-cache libcrypto3 libssl3
+
 # Only production deps
 COPY package*.json ./
 COPY prisma/ ./prisma/

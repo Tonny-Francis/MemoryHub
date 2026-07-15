@@ -9,6 +9,7 @@
     "build:ui": "cd ui && npm run build",
     "build:all": "npm run build:ui && npm run build",
     "start": "node dist/server.js",
+    "bot:discord": "node dist/discord-bot.js",
     "ingestion:run": "node dist/ingestion-runner.js",
     "voice:record": "node dist/voice-recorder.js",
     "db:generate": "prisma generate",

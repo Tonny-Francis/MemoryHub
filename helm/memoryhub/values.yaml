@@ -124,3 +124,7 @@ readinessProbe:
     port: 8000
   initialDelaySeconds: 10
   periodSeconds: 10
+
+# ── Discord Bot (persistent, stays online 24/7) ───────────────────────────────
+discordBot:
+  enabled: true

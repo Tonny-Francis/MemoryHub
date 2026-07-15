@@ -1,0 +1,55 @@
+{{- if .Values.discordBot.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "memoryhub.fullname" . }}-discord-bot
+  labels:
+    {{- include "memoryhub.labels" . | nindent 4 }}
+    app.kubernetes.io/component: discord-bot
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "memoryhub.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: discord-bot
+  template:
+    metadata:
+      labels:
+        {{- include "memoryhub.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: discord-bot
+    spec:
+      {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: discord-bot
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["node", "dist/discord-bot.js"]
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: DISCORD_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "memoryhub.fullname" . }}-secrets
+                  key: discordBotToken
+            - name: MEMORYHUB_API_URL
+              value: "http://{{ include "memoryhub.fullname" . }}:8000"
+            - name: MEMORYHUB_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "memoryhub.fullname" . }}-secrets
+                  key: jwtSecret
+                  optional: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+{{- end }}

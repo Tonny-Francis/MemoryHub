@@ -1,6 +1,8 @@
 <div align="center">
 
-# 🧠 MemoryHub
+<img src="docs/logo.svg" width="80" height="80" alt="MemoryHub logo" />
+
+# MemoryHub
 
 **Second brain automático para times de engenharia — captura contexto sem o dev precisar documentar**
 

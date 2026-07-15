@@ -24,8 +24,31 @@ const logger = pino({ level: 'info' });
 const env = {
   DISCORD_BOT_TOKEN: process.env.DISCORD_BOT_TOKEN,
   MEMORYHUB_API_URL: process.env.MEMORYHUB_API_URL,
-  MEMORYHUB_API_TOKEN: process.env.MEMORYHUB_API_TOKEN,
+  MEMORYHUB_EMAIL: process.env.MEMORYHUB_EMAIL,
+  MEMORYHUB_PASSWORD: process.env.MEMORYHUB_PASSWORD,
 };
+
+let apiToken: string | null = null;
+
+async function getApiToken(): Promise<string | null> {
+  if (apiToken) return apiToken;
+  if (!env.MEMORYHUB_API_URL || !env.MEMORYHUB_EMAIL || !env.MEMORYHUB_PASSWORD) return null;
+  try {
+    const res = await fetch(`${env.MEMORYHUB_API_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: env.MEMORYHUB_EMAIL, password: env.MEMORYHUB_PASSWORD }),
+    });
+    if (!res.ok) { logger.warn('MemoryHub login failed'); return null; }
+    const data = await res.json() as { accessToken: string };
+    apiToken = data.accessToken;
+    logger.info('Authenticated with MemoryHub API');
+    return apiToken;
+  } catch (err) {
+    logger.warn({ err }, 'Could not reach MemoryHub API');
+    return null;
+  }
+}
 import { cleanupWav, writeWav } from './VoiceRecorder/AudioWriter.js';
 import { buildFullTranscript, extractDecisionDraft, transcribeFile, type SpeakerTranscript } from './VoiceRecorder/Transcriber.js';
 
@@ -198,11 +221,12 @@ async function handleLeave(interaction: ChatInputCommandInteraction) {
     fullTranscript,
   ].join('\n');
 
-  if (env.MEMORYHUB_API_URL && env.MEMORYHUB_API_TOKEN) {
+  const token = await getApiToken();
+  if (env.MEMORYHUB_API_URL && token) {
     const res = await fetch(`${env.MEMORYHUB_API_URL}/api/projects/${session.projectSlug}/drafts`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${env.MEMORYHUB_API_TOKEN}`,
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ topic: session.sessionTitle, content: draftContent, date: new Date().toISOString().slice(0, 10) }),

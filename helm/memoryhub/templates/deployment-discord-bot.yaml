@@ -39,11 +39,17 @@ spec:
                   key: discordBotToken
             - name: MEMORYHUB_API_URL
               value: "http://{{ include "memoryhub.fullname" . }}:8000"
-            - name: MEMORYHUB_API_TOKEN
+            - name: MEMORYHUB_EMAIL
               valueFrom:
                 secretKeyRef:
                   name: {{ include "memoryhub.fullname" . }}-secrets
-                  key: jwtSecret
+                  key: initialAdminEmail
+                  optional: true
+            - name: MEMORYHUB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "memoryhub.fullname" . }}-secrets
+                  key: initialAdminPassword
                   optional: true
           resources:
             requests:

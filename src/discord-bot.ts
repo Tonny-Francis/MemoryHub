@@ -82,6 +82,9 @@ const commands = [
   new SlashCommandBuilder()
     .setName('draft')
     .setDescription('Log a draft (pending review) to MemoryHub'),
+  new SlashCommandBuilder()
+    .setName('help')
+    .setDescription('List all MemoryHub bot commands'),
 ].map((c) => c.toJSON());
 
 const client = new Client({
@@ -186,6 +189,30 @@ async function handleModalSubmit(interaction: ModalSubmitInteraction) {
     logger.error({ err }, 'Failed to save to MemoryHub');
     await interaction.editReply('Could not reach MemoryHub API.');
   }
+}
+
+async function handleHelp(interaction: ChatInputCommandInteraction) {
+  const lines = [
+    '## 📖 MemoryHub Bot — Commands',
+    '',
+    '### ✍️  Text commands',
+    '`/decision` — Open a form to log a **confirmed decision** directly to a project.',
+    '`/draft` — Open a form to log a **draft** (appears in the UI for review before confirming).',
+    '',
+    '### 🎙️  Voice transcription',
+    '`/join <project> [title]` — Join your voice channel and start recording all speakers.',
+    '`/leave` — Stop recording, transcribe with Whisper, extract a decision draft and save it.',
+    '',
+    '### ℹ️  Other',
+    '`/help` — Show this message.',
+    '',
+    '### 💡 Tips',
+    '- `/decision` saves immediately; `/draft` needs approval in the UI.',
+    '- After `/join`, every speaker in the channel is recorded separately.',
+    '- The **project** field must match the slug shown in the MemoryHub dashboard.',
+  ].join('\n');
+
+  await interaction.reply({ content: lines, ephemeral: true });
 }
 
 async function handleJoin(interaction: ChatInputCommandInteraction) {
@@ -341,6 +368,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.commandName === 'leave') await handleLeave(interaction).catch((err) => logger.error({ err }, 'leave error'));
     if (interaction.commandName === 'decision') await interaction.showModal(buildEntryModal('decision-modal', 'Log Decision')).catch((err) => logger.error({ err }, 'decision modal error'));
     if (interaction.commandName === 'draft') await interaction.showModal(buildEntryModal('draft-modal', 'Log Draft')).catch((err) => logger.error({ err }, 'draft modal error'));
+    if (interaction.commandName === 'help') await handleHelp(interaction).catch((err) => logger.error({ err }, 'help error'));
   }
 
   if (interaction.isModalSubmit()) {

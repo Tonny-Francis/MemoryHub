@@ -1,6 +1,6 @@
 # ── Image ─────────────────────────────────────────────────────────────────────
 image:
-  repository: ghcr.io/tonnysousa/memoryhub
+  repository: ghcr.io/tonny-francis/memoryhub
   tag: "latest"
   pullPolicy: IfNotPresent
 
@@ -91,7 +91,7 @@ ingestion:
   enabled: true
   schedule: "0 */6 * * *"
   image:
-    repository: ghcr.io/tonnysousa/memoryhub
+    repository: ghcr.io/tonny-francis/memoryhub
     tag: "latest"
   resources:
     requests:

@@ -25,6 +25,7 @@ const EnvSchema = z.object({
   GITLAB_TOKEN: z.string().optional(),
   GITLAB_WEBHOOK_SECRET: z.string().optional(),
   GITLAB_PROJECT_IDS: z.string().optional(),
+  GITLAB_GROUP_IDS: z.string().optional(),
 
   DISCORD_BOT_TOKEN: z.string().optional(),
   DISCORD_CHANNEL_IDS: z.string().optional(),

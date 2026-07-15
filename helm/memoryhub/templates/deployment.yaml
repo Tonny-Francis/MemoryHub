@@ -120,6 +120,10 @@ spec:
             - name: GITLAB_PROJECT_IDS
               value: {{ .Values.config.gitlabProjectIds | quote }}
             {{- end }}
+            {{- if .Values.config.gitlabGroupIds }}
+            - name: GITLAB_GROUP_IDS
+              value: {{ .Values.config.gitlabGroupIds | quote }}
+            {{- end }}
             - name: DISCORD_BOT_TOKEN
               valueFrom:
                 secretKeyRef:

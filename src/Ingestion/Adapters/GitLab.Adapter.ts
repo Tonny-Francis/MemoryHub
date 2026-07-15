@@ -94,18 +94,52 @@ async function pollCommits(projectId: string, projectPath: string): Promise<Inge
     }));
 }
 
-export async function pollGitLab(): Promise<IngestItem[]> {
-  if (!env.GITLAB_TOKEN || !env.GITLAB_PROJECT_IDS) return [];
+interface GitLabProject {
+  id: number;
+  path_with_namespace: string;
+}
 
-  const projectIds = env.GITLAB_PROJECT_IDS.split(',').map((s) => s.trim()).filter(Boolean);
+async function resolveProjectIds(): Promise<{ id: string; path: string }[]> {
+  const projects: { id: string; path: string }[] = [];
+
+  if (env.GITLAB_PROJECT_IDS) {
+    for (const pid of env.GITLAB_PROJECT_IDS.split(',').map((s) => s.trim()).filter(Boolean)) {
+      projects.push({ id: pid, path: pid });
+    }
+  }
+
+  if (env.GITLAB_GROUP_IDS) {
+    for (const gid of env.GITLAB_GROUP_IDS.split(',').map((s) => s.trim()).filter(Boolean)) {
+      try {
+        const params = new URLSearchParams({ per_page: '100', include_subgroups: 'true' });
+        const groupProjects = await gitlabFetch<GitLabProject[]>(`/groups/${encodeURIComponent(gid)}/projects?${params}`);
+        for (const p of groupProjects) {
+          if (!projects.some((existing) => existing.id === String(p.id))) {
+            projects.push({ id: String(p.id), path: p.path_with_namespace });
+          }
+        }
+      } catch (err) {
+        console.warn(`[GitLab] Failed to list projects for group ${gid}:`, err);
+      }
+    }
+  }
+
+  return projects;
+}
+
+export async function pollGitLab(): Promise<IngestItem[]> {
+  if (!env.GITLAB_TOKEN) return [];
+  if (!env.GITLAB_PROJECT_IDS && !env.GITLAB_GROUP_IDS) return [];
+
+  const projects = await resolveProjectIds();
   const results: IngestItem[] = [];
 
-  for (const pid of projectIds) {
+  for (const { id, path } of projects) {
     try {
-      const [mrs, commits] = await Promise.all([pollMRs(pid, pid), pollCommits(pid, pid)]);
+      const [mrs, commits] = await Promise.all([pollMRs(id, path), pollCommits(id, path)]);
       results.push(...mrs, ...commits);
     } catch (err) {
-      console.warn(`[GitLab] Failed to poll ${pid}:`, err);
+      console.warn(`[GitLab] Failed to poll ${id}:`, err);
     }
   }
 

@@ -335,7 +335,7 @@ npm start
 - [x] Busca semântica — pgvector + OpenAI embeddings (opcional)
 - [ ] Slack adapter
 - [ ] Confluence / Notion adapter
-- [ ] Grafo de conhecimento (visualização de conexões entre decisões)
+- [x] Grafo de conhecimento (visualização de conexões entre decisões)
 
 ---
 

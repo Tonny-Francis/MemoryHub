@@ -23,7 +23,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-RUN apt-get update -qq && apt-get install -y --no-install-recommends openssl \
+RUN apt-get update -qq && apt-get install -y --no-install-recommends openssl git \
     && apt-get upgrade -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 

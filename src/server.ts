@@ -41,6 +41,9 @@ function createMcpServer(): McpServer {
 }
 
 async function main(): Promise<void> {
+  if (!env.DATABASE_URL) { logger.error('DATABASE_URL is required'); process.exit(1); }
+  if (!env.JWT_SECRET) { logger.error('JWT_SECRET is required'); process.exit(1); }
+
   await initGit();
   schedulePull();
   await seedAdminIfEmpty();
